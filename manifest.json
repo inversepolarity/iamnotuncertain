@@ -59,6 +59,27 @@
     }
   ],
   
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/redirecting32.png"],
+      "matches": [
+        "*://*.google.com/*",
+        "*://*.bing.com/*",
+        "*://*.duckduckgo.com/*",
+        "*://kagi.com/*",
+        "*://*.yahoo.com/*",
+        "*://*.brave.com/*",
+        "*://*.ecosia.org/*",
+        "*://*.startpage.com/*",
+        "*://*.yandex.com/*",
+        "*://*.baidu.com/*",
+        "*://*.qwant.com/*",
+        "*://*.searx.be/*",
+        "*://*.mojeek.com/*"
+      ]
+    }
+  ],
+  
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true

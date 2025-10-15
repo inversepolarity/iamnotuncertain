@@ -92,16 +92,18 @@
         position: fixed;
         top: 20px;
         right: 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #1a1a1a;
         color: white;
         padding: 16px 20px;
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
         z-index: 999999;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         font-size: 14px;
-        min-width: 320px;
+        min-width: 340px;
+        max-width: 400px;
         animation: slideIn 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
       ">
         <style>
           @keyframes slideIn {
@@ -116,50 +118,54 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
           }
-          .search-fade-out {
+          .lucky-search-fade-out {
             animation: slideOut 0.3s ease !important;
           }
         </style>
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
           <div style="
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255,255,255,0.3);
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
             border-top-color: white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
           "></div>
           <div style="flex: 1;">
-            <div style="font-weight: 600; margin-bottom: 4px;">
-              ⚡ Redirecting to result #${index}
+            <div style="font-weight: 600; margin-bottom: 4px; font-size: 14px; letter-spacing: -0.2px;">
+              Redirecting to result #${index}
             </div>
-            <div style="font-size: 12px; opacity: 0.9;">
-              <span id="countdown">${delay / 1000}</span>s remaining
+            <div style="font-size: 12px; opacity: 0.7; font-weight: 500;">
+              <span id="lucky-countdown">${delay / 1000}</span>s remaining
             </div>
           </div>
         </div>
         <div style="
           font-size: 12px;
-          opacity: 0.8;
+          opacity: 0.6;
           margin-bottom: 12px;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          padding: 8px 10px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 4px;
+          font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
         " title="${resultUrl}">
           ${resultUrl}
         </div>
         <div style="
           font-size: 12px;
-          opacity: 0.9;
-          padding: 8px;
-          background: rgba(255,255,255,0.1);
+          opacity: 0.8;
+          padding: 8px 10px;
+          background: rgba(255, 255, 255, 0.08);
           border-radius: 4px;
           text-align: center;
+          border: 1px solid rgba(255, 255, 255, 0.1);
         ">
-          💡 Click the <strong>⏳ icon in address bar</strong> or press <strong>ESC</strong> to cancel
+          Click the icon in address bar or press <strong style="font-weight: 600;">ESC</strong> to cancel
         </div>
-      </div>
-    `;
+      </div>`;
 
     document.body.appendChild(notification);
 

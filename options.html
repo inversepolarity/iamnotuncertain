@@ -11,57 +11,114 @@
       }
 
       body {
-        width: 600px;
-        padding: 30px;
+        width: 650px;
+        padding: 0;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Oxygen, Ubuntu, sans-serif;
-        background: #f5f5f5;
+          "Helvetica Neue", Arial, sans-serif;
+        background: #ffffff;
+        color: #1a1a1a;
       }
 
       .container {
         background: white;
-        border-radius: 8px;
-        padding: 30px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 0;
+      }
+
+      header {
+        padding: 40px 40px 30px;
+        border-bottom: 1px solid #e5e5e5;
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+
+      .header-icon {
+        width: 48px;
+        height: 48px;
       }
 
       h1 {
-        font-size: 24px;
-        margin-bottom: 10px;
-        color: #333;
+        font-size: 28px;
+        font-weight: 600;
+        color: #1a1a1a;
+        letter-spacing: -0.5px;
       }
 
       .subtitle {
-        color: #666;
-        margin-bottom: 30px;
+        color: #6b6b6b;
         font-size: 14px;
+        line-height: 1.5;
+      }
+
+      main {
+        padding: 30px 40px 40px;
       }
 
       .section {
-        margin-bottom: 30px;
+        margin-bottom: 32px;
+        padding-bottom: 32px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
       }
 
       .section-title {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 600;
-        margin-bottom: 15px;
-        color: #333;
-        display: flex;
+        color: #1a1a1a;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .status-badge {
+        display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        padding: 4px 10px;
+        background: #f5f5f5;
+        border-radius: 12px;
+        font-size: 12px;
+        color: #6b6b6b;
+        font-weight: 500;
+      }
+
+      .status-badge img {
+        width: 14px;
+        height: 14px;
       }
 
       .toggle-wrapper {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 10px;
+        justify-content: space-between;
+        padding: 16px 0;
+      }
+
+      .toggle-label {
+        font-size: 15px;
+        color: #1a1a1a;
+        font-weight: 500;
       }
 
       .toggle {
         position: relative;
-        width: 50px;
-        height: 26px;
+        width: 44px;
+        height: 24px;
       }
 
       .toggle input {
@@ -77,85 +134,101 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #ccc;
+        background-color: #e5e5e5;
         transition: 0.3s;
-        border-radius: 26px;
+        border-radius: 24px;
       }
 
       .slider:before {
         position: absolute;
         content: "";
-        height: 20px;
-        width: 20px;
+        height: 18px;
+        width: 18px;
         left: 3px;
         bottom: 3px;
         background-color: white;
         transition: 0.3s;
         border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
       }
 
       input:checked + .slider {
-        background-color: #4caf50;
+        background-color: #1a1a1a;
       }
 
       input:checked + .slider:before {
-        transform: translateX(24px);
+        transform: translateX(20px);
       }
 
       .description {
-        color: #666;
+        color: #6b6b6b;
         font-size: 13px;
-        margin-top: 5px;
-        line-height: 1.4;
+        line-height: 1.5;
+        margin-top: 8px;
       }
 
       .number-input-wrapper {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-top: 10px;
+        gap: 16px;
+        padding: 16px 0;
       }
 
       input[type="number"] {
-        width: 80px;
-        padding: 10px;
-        border: 2px solid #e0e0e0;
+        width: 70px;
+        padding: 8px 12px;
+        border: 1px solid #e5e5e5;
         border-radius: 6px;
-        font-size: 16px;
+        font-size: 15px;
         text-align: center;
         transition: border-color 0.2s;
+        font-weight: 500;
       }
 
       input[type="number"]:focus {
         outline: none;
-        border-color: #4caf50;
+        border-color: #1a1a1a;
+      }
+
+      .number-label {
+        font-size: 14px;
+        color: #6b6b6b;
+      }
+
+      .number-label strong {
+        color: #1a1a1a;
+        font-weight: 600;
       }
 
       .engines-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        margin-top: 10px;
+        gap: 8px;
+        margin-top: 16px;
       }
 
       .engine-item {
         display: flex;
         align-items: center;
         padding: 12px;
-        background: #f9f9f9;
+        background: #fafafa;
         border-radius: 6px;
         transition: background 0.2s;
+        border: 1px solid transparent;
       }
 
       .engine-item:hover {
-        background: #f0f0f0;
+        background: #f5f5f5;
+        border-color: #e5e5e5;
       }
 
       .engine-item input[type="checkbox"] {
+        margin: 0;
         margin-right: 10px;
-        width: 18px;
-        height: 18px;
+        width: 16px;
+        height: 16px;
         cursor: pointer;
+        accent-color: #1a1a1a;
       }
 
       .engine-item label {
@@ -163,18 +236,71 @@
         font-size: 14px;
         user-select: none;
         flex: 1;
+        color: #1a1a1a;
+      }
+
+      .info-box {
+        background: #fafafa;
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 16px;
+      }
+
+      .info-box-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 10px;
+      }
+
+      .info-box ul {
+        margin: 0;
+        padding-left: 20px;
+        line-height: 1.8;
+        color: #6b6b6b;
+        font-size: 13px;
+      }
+
+      .info-box li {
+        margin-bottom: 4px;
+      }
+
+      .info-box strong {
+        color: #1a1a1a;
+        font-weight: 500;
+      }
+
+      .icon-legend {
+        display: flex;
+        gap: 20px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #e5e5e5;
+        font-size: 12px;
+      }
+
+      .icon-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #6b6b6b;
+      }
+
+      .icon-legend-item img {
+        width: 16px;
+        height: 16px;
       }
 
       .button-group {
         display: flex;
-        gap: 10px;
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid #e0e0e0;
+        gap: 12px;
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid #e5e5e5;
       }
 
       button {
-        padding: 12px 24px;
+        padding: 10px 20px;
         border: none;
         border-radius: 6px;
         cursor: pointer;
@@ -184,38 +310,42 @@
       }
 
       .btn-primary {
-        background-color: #4caf50;
+        background-color: #1a1a1a;
         color: white;
       }
 
       .btn-primary:hover {
-        background-color: #45a049;
+        background-color: #000000;
         transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .btn-primary:active {
+        transform: translateY(0);
       }
 
       .btn-secondary {
-        background-color: #e0e0e0;
-        color: #333;
+        background-color: #f5f5f5;
+        color: #1a1a1a;
       }
 
       .btn-secondary:hover {
-        background-color: #d0d0d0;
+        background-color: #e5e5e5;
       }
 
       .status {
-        margin-top: 15px;
-        padding: 12px;
+        margin-top: 16px;
+        padding: 12px 16px;
         border-radius: 6px;
-        font-size: 14px;
+        font-size: 13px;
         display: none;
         animation: slideIn 0.3s ease;
       }
 
       .status.success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
+        background-color: #f0f9f4;
+        color: #166534;
+        border: 1px solid #d1f4e0;
       }
 
       @keyframes slideIn {
@@ -229,154 +359,154 @@
         }
       }
 
-      .current-state {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        background: #f0f0f0;
-        border-radius: 20px;
-        font-size: 13px;
-        color: #666;
+      footer {
+        padding: 20px 40px;
+        border-top: 1px solid #e5e5e5;
+        text-align: center;
+        background: #fafafa;
       }
 
-      .emoji-icon {
-        font-size: 18px;
+      .footer-text {
+        font-size: 12px;
+        color: #6b6b6b;
       }
 
-      .info-box {
-        background: #e3f2fd;
-        border-left: 4px solid #2196f3;
-        padding: 15px;
-        margin-top: 10px;
-        border-radius: 4px;
+      .footer-text a {
+        color: #1a1a1a;
+        text-decoration: none;
+        font-weight: 500;
       }
 
-      .info-box ul {
-        margin: 5px 0 0 20px;
-        padding: 0;
-        line-height: 1.8;
-        color: #333;
-      }
-
-      .info-box strong {
-        color: #1976d2;
+      .footer-text a:hover {
+        text-decoration: underline;
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>⚡ i am not uncertain</h1>
-      <p class="subtitle">
-        Skip search results pages and go directly to what you're looking for
-      </p>
+      <header>
+        <div class="header-content">
+          <img src="icons/icon48.png" alt="Icon" class="header-icon" />
+          <h1>i am not uncertain</h1>
+        </div>
+        <p class="subtitle">
+          Skip search results pages and go directly to what you're looking for
+        </p>
+      </header>
 
-      <div class="section">
-        <div class="section-title">
-          Global Settings
-          <span class="current-state">
-            <span class="emoji-icon" id="statusIcon">➰</span>
-            <span id="statusText">Enabled</span>
-          </span>
-        </div>
-
-        <div class="toggle-wrapper">
-          <label class="toggle">
-            <input type="checkbox" id="enabled" checked />
-            <span class="slider"></span>
-          </label>
-          <label for="enabled" style="cursor: pointer; font-size: 14px">
-            are you certain?
-          </label>
-        </div>
-        <div class="description">
-          Click the toolbar icon (➰/➿) to quickly toggle on/off
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">Result Position</div>
-        <div class="number-input-wrapper">
-          <input type="number" id="resultIndex" min="1" max="20" value="1" />
-          <span style="font-size: 14px; color: #666">
-            Redirect to the <strong id="ordinal">1st</strong> search result
-          </span>
-        </div>
-        <div class="description">
-          Choose which search result to open (1 = first, 2 = second, etc.)
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">Display Options</div>
-
-        <div class="toggle-wrapper">
-          <label class="toggle">
-            <input type="checkbox" id="showNotification" checked />
-            <span class="slider"></span>
-          </label>
-          <label
-            for="showNotification"
-            style="cursor: pointer; font-size: 14px"
-          >
-            Show redirect notification
-          </label>
-        </div>
-        <div class="description">
-          Display a notification with countdown and target URL while redirecting
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">How It Works</div>
-        <div class="info-box">
-          <strong>While redirecting, you'll see:</strong>
-          <ul>
-            <li>
-              <strong>⏳ Page action icon</strong> appears in the address bar
-              (omnibar)
-            </li>
-            <li>Optional notification with countdown timer (3 seconds)</li>
-            <li>The target URL you're being redirected to</li>
-          </ul>
-          <div style="margin-top: 12px">
-            <strong>To cancel redirect:</strong>
+      <main>
+        <div class="section">
+          <div class="section-header">
+            <div class="section-title">Extension Status</div>
+            <div class="status-badge">
+              <img src="icons/icon_active.png" alt="" id="statusIcon" />
+              <span id="statusText">Enabled</span>
+            </div>
           </div>
-          <ul>
-            <li>Click the <strong>⏳ icon in the address bar</strong></li>
-            <li>Press <strong>ESC</strong> key</li>
-            <li>Page action will show <strong>⛔</strong> when cancelled</li>
-          </ul>
-          <div
-            style="
-              margin-top: 12px;
-              padding-top: 12px;
-              border-top: 1px solid #90caf9;
-              font-size: 13px;
-            "
-          >
-            <strong>Toolbar icon states:</strong>
-            ➰ Enabled | ➿ Disabled
+
+          <div class="toggle-wrapper">
+            <span class="toggle-label">are you certain?</span>
+            <label class="toggle">
+              <input type="checkbox" id="enabled" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="description">
+            Toggle the extension on or off. You can also click the toolbar icon
+            to quickly enable or disable.
           </div>
         </div>
-      </div>
 
-      <div class="section">
-        <div class="section-title">Enabled Search Engines</div>
-        <div class="description" style="margin-bottom: 10px">
-          Select which search engines should use i am not uncertain
+        <div class="section">
+          <div class="section-title">Result Position</div>
+          <div class="number-input-wrapper">
+            <input type="number" id="resultIndex" min="1" max="20" value="1" />
+            <span class="number-label">
+              Redirect to the <strong id="ordinal">1st</strong> search result
+            </span>
+          </div>
+          <div class="description">
+            Choose which search result to open (1 = first, 2 = second, etc.)
+          </div>
         </div>
-        <div class="engines-grid" id="enginesGrid"></div>
-      </div>
 
-      <div class="button-group">
-        <button class="btn-primary" id="save">Save Settings</button>
-        <button class="btn-secondary" id="reset">Reset to Defaults</button>
-      </div>
+        <div class="section">
+          <div class="section-title">Display Options</div>
 
-      <div class="status success" id="status">
-        ✓ Settings saved successfully!
-      </div>
+          <div class="toggle-wrapper">
+            <span class="toggle-label">Show redirect notification</span>
+            <label class="toggle">
+              <input type="checkbox" id="showNotification" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="description">
+            Display a notification with countdown and target URL while
+            redirecting
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">How It Works</div>
+          <div class="info-box">
+            <div class="info-box-title">While redirecting:</div>
+            <ul>
+              <li>Page action icon appears in the address bar</li>
+              <li>Optional notification with countdown timer (3 seconds)</li>
+              <li>The target URL you're being redirected to</li>
+            </ul>
+
+            <div class="info-box-title" style="margin-top: 16px">
+              To cancel redirect:
+            </div>
+            <ul>
+              <li>Click the page action icon in the address bar</li>
+              <li>Press <strong>ESC</strong> key</li>
+            </ul>
+
+            <div class="icon-legend">
+              <div class="icon-legend-item">
+                <img src="icons/icon_active.png" alt="Enabled" />
+                <span>Enabled</span>
+              </div>
+              <div class="icon-legend-item">
+                <img src="icons/icon_deactivated.png" alt="Disabled" />
+                <span>Disabled</span>
+              </div>
+              <div class="icon-legend-item">
+                <img src="icons/redirecting16.png" alt="Redirecting" />
+                <span>Redirecting</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Search Engines</div>
+          <div class="description" style="margin-bottom: 4px">
+            Select which search engines should use i am not uncertain
+          </div>
+          <div class="engines-grid" id="enginesGrid"></div>
+        </div>
+
+        <div class="button-group">
+          <button class="btn-primary" id="save">Save Settings</button>
+          <button class="btn-secondary" id="reset">Reset to Defaults</button>
+        </div>
+
+        <div class="status success" id="status">
+          Settings saved successfully
+        </div>
+      </main>
+
+      <footer>
+        <p class="footer-text">
+          <a href="https://evenzero.in" target="_blank" rel="noopener"
+            >evenzero.in</a
+          >
+          / v1.0.0
+        </p>
+      </footer>
     </div>
 
     <script src="search-engines.js"></script>

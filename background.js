@@ -26,8 +26,8 @@ browserAPI.storage.sync
 function updateIcon() {
   const iconPath = isEnabled ? ICON_ACTIVE : ICON_DEACTIVATED;
   const title = isEnabled
-    ? "Lucky Search: Enabled (click to disable)"
-    : "Lucky Search: Disabled (click to enable)";
+    ? "IANU: Enabled (click to disable)"
+    : "IANU: Disabled (click to enable)";
 
   browserAPI.action.setIcon({
     path: {
