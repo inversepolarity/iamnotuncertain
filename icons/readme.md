@@ -1,0 +1,22 @@
+![](./icon128.png)
+
+## i am not uncertain
+omnibar search → nth result
+
+
+## search engines supported
+
+- google
+- ddg
+- kagi
+- bing
+- ecosia
+- qwant
+- brave search
+- yahoo
+- startpage
+- yandex
+
+![options](/options.png)
+
+
