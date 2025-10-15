@@ -1,36 +1,105 @@
 {
-  "manifest_version": 2,
-  "name": "iamnotuncertain",
-  "description": " a cross-browser extension that goes directly from search to first result",
-  "version": "0.0.1",
-  "icons": {
-    "64": "icons/icon.png"
+  "manifest_version": 3,
+  "name": "i am not uncertain",
+  "version": "1.0",
+  "description": "Redirects to Nth search result instead of showing search results page",
+  
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "suraj@evenzero.in",
+      "strict_min_version": "109.0"
+    }
   },
+  
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
+  
+  "host_permissions": [
+    "*://*.google.com/*",
+    "*://*.bing.com/*",
+    "*://*.duckduckgo.com/*",
+    "*://kagi.com/*",
+    "*://*.yahoo.com/*",
+    "*://*.brave.com/*",
+    "*://*.ecosia.org/*",
+    "*://*.startpage.com/*",
+    "*://*.yandex.com/*",
+    "*://*.baidu.com/*",
+    "*://*.qwant.com/*",
+    "*://*.searx.be/*",
+    "*://*.mojeek.com/*"
+  ],
+  
+  "background": {
+    "scripts": ["background.js"]
+  },
+  
   "content_scripts": [
     {
       "matches": [
-        "*://*.mozilla.org/*"
+        "*://*.google.com/search*",
+        "*://*.bing.com/search*",
+        "*://*.duckduckgo.com/*",
+        "*://kagi.com/search*",
+        "*://*.yahoo.com/search*",
+        "*://search.brave.com/search*",
+        "*://*.ecosia.org/search*",
+        "*://*.startpage.com/search*",
+        "*://*.yandex.com/search*",
+        "*://*.baidu.com/s*",
+        "*://*.qwant.com/*",
+        "*://*.searx.be/search*",
+        "*://*.mojeek.com/search*"
       ],
-      "js": [
-        "content_script.js"
-      ]
+      "js": ["search-engines.js", "content.js"],
+      "run_at": "document_end"
     }
   ],
-  "browser_action": {
-    "default_icon": {
-      "64": "icons/icon.png"
-    },
-    "default_popup": "browserAction/index.html",
-    "default_title": "iamnotuncertain"
+  
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
   },
+  
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    },
+    "default_title": "i am not uncertain"
+  },
+  
   "page_action": {
     "default_icon": {
-      "64": "icons/icon.png"
+      "16": "icons/redirecting16.png",
+      "32": "icons/redirecting32.png"
     },
-    "default_popup": "pageAction/index.html",
-    "default_title": "iamnotuncertain"
+    "default_title": "i am not uncertain - Click to cancel redirect",
+    "show_matches": [
+      "*://*.google.com/search*",
+      "*://*.bing.com/search*",
+      "*://*.duckduckgo.com/*",
+      "*://kagi.com/search*",
+      "*://*.yahoo.com/search*",
+      "*://search.brave.com/search*",
+      "*://*.ecosia.org/search*",
+      "*://*.startpage.com/search*",
+      "*://*.yandex.com/search*",
+      "*://*.baidu.com/s*",
+      "*://*.qwant.com/*",
+      "*://*.searx.be/search*",
+      "*://*.mojeek.com/search*"
+    ]
   },
-  "options_ui": {
-    "page": "options/index.html"
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   }
 }
