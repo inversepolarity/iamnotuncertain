@@ -115,7 +115,7 @@ document.getElementById("save").addEventListener("click", () => {
       status.style.display = "block";
       setTimeout(() => {
         status.style.display = "none";
-      }, 3000);
+      }, 1000);
     })
     .catch(() => {
       // Fallback
@@ -131,7 +131,7 @@ document.getElementById("save").addEventListener("click", () => {
           status.style.display = "block";
           setTimeout(() => {
             status.style.display = "none";
-          }, 3000);
+          }, 1000);
         }
       );
     });

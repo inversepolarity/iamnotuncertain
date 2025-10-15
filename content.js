@@ -118,7 +118,7 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
           }
-          .lucky-search-fade-out {
+          .search-fade-out {
             animation: slideOut 0.3s ease !important;
           }
         </style>
@@ -136,7 +136,7 @@
               Redirecting to result #${index}
             </div>
             <div style="font-size: 12px; opacity: 0.7; font-weight: 500;">
-              <span id="lucky-countdown">${delay / 1000}</span>s remaining
+              <span id="countdown">${delay / 1000}</span>s remaining
             </div>
           </div>
         </div>
@@ -170,14 +170,14 @@
     document.body.appendChild(notification);
 
     // Countdown
-    let remaining = delay / 1000;
+    let remaining = 2000 / 1000;
     const countdownEl = document.getElementById("countdown");
     countdownInterval = setInterval(() => {
       remaining -= 0.1;
       if (remaining > 0 && countdownEl) {
         countdownEl.textContent = remaining.toFixed(1);
       }
-    }, 100);
+    }, 10);
 
     return notification;
   }
@@ -286,7 +286,7 @@
         });
 
         // Show notification
-        showRedirectNotification(resultUrl, config.resultIndex, 3000);
+        showRedirectNotification(resultUrl, config.resultIndex, 1000);
 
         // Redirect after delay
         redirectTimeout = setTimeout(() => {
@@ -295,12 +295,12 @@
             window.location.href = resultUrl;
             chrome.runtime.sendMessage({ action: "redirectComplete" });
           }
-        }, 3000);
+        }, 1000);
       } else {
         console.log(
           `i am not uncertain: Could not find result #${config.resultIndex}`
         );
-        sessionStorage.removeItem("luckySearchProcessed");
+        sessionStorage.removeItem("SearchProcessed");
         chrome.runtime.sendMessage({ action: "redirectFailed" });
       }
     }, 500);
