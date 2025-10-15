@@ -1,4 +1,4 @@
-![](./icon128.png)
+![](https://github.com/inversepolarity/iamnotuncertain/blob/master/icons/icon128.png)
 
 ## i am not uncertain
 omnibar search → nth result
