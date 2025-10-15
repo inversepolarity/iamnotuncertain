@@ -1,4 +1,3 @@
-console.log("3 content");
 (function () {
   "use strict";
 
@@ -6,7 +5,12 @@ console.log("3 content");
     enabled: true,
     resultIndex: 1,
     enabledEngines: {},
+    showNotification: true,
   };
+
+  let redirectCancelled = false;
+  let redirectTimeout = null;
+  let countdownInterval = null;
 
   // Detect current search engine
   function detectSearchEngine() {
@@ -71,6 +75,166 @@ console.log("3 content");
     return null;
   }
 
+  // Create and show notification overlay
+  function showRedirectNotification(resultUrl, index, delay) {
+    if (!config.showNotification) return;
+
+    // Remove any existing notification
+    const existing = document.getElementById("search-notification");
+    if (existing) {
+      existing.remove();
+    }
+
+    const notification = document.createElement("div");
+    notification.id = "search-notification";
+    notification.innerHTML = `
+      <div style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 999999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        min-width: 320px;
+        animation: slideIn 0.3s ease;
+      ">
+        <style>
+          @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+          }
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          .search-fade-out {
+            animation: slideOut 0.3s ease !important;
+          }
+        </style>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+          <div style="
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          "></div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; margin-bottom: 4px;">
+              ⚡ Redirecting to result #${index}
+            </div>
+            <div style="font-size: 12px; opacity: 0.9;">
+              <span id="countdown">${delay / 1000}</span>s remaining
+            </div>
+          </div>
+        </div>
+        <div style="
+          font-size: 12px;
+          opacity: 0.8;
+          margin-bottom: 12px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        " title="${resultUrl}">
+          ${resultUrl}
+        </div>
+        <div style="
+          font-size: 12px;
+          opacity: 0.9;
+          padding: 8px;
+          background: rgba(255,255,255,0.1);
+          border-radius: 4px;
+          text-align: center;
+        ">
+          💡 Click the <strong>⏳ icon in address bar</strong> or press <strong>ESC</strong> to cancel
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Countdown
+    let remaining = delay / 1000;
+    const countdownEl = document.getElementById("countdown");
+    countdownInterval = setInterval(() => {
+      remaining -= 0.1;
+      if (remaining > 0 && countdownEl) {
+        countdownEl.textContent = remaining.toFixed(1);
+      }
+    }, 100);
+
+    return notification;
+  }
+
+  function hideRedirectNotification() {
+    const notification = document.getElementById("search-notification");
+    if (notification) {
+      notification.querySelector("div").classList.add("search-fade-out");
+      setTimeout(() => notification.remove(), 300);
+    }
+  }
+
+  function showCancelledMessage() {
+    const cancelled = document.createElement("div");
+    cancelled.innerHTML = `
+      <div style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #F44336;
+        color: white;
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 999999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        animation: slideIn 0.3s ease;
+      ">
+        ⛔ Redirect cancelled
+      </div>
+    `;
+    document.body.appendChild(cancelled);
+    setTimeout(() => {
+      const div = cancelled.querySelector("div");
+      if (div) {
+        div.style.animation = "slideOut 0.3s ease";
+        setTimeout(() => cancelled.remove(), 300);
+      }
+    }, 2000);
+  }
+
+  function cancelRedirect() {
+    redirectCancelled = true;
+
+    if (redirectTimeout) {
+      clearTimeout(redirectTimeout);
+      redirectTimeout = null;
+    }
+
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+
+    hideRedirectNotification();
+    showCancelledMessage();
+
+    chrome.runtime.sendMessage({ action: "redirectCancelled" });
+    sessionStorage.removeItem("SearchProcessed");
+  }
+
   // Main redirect logic
   function attemptRedirect() {
     const searchEngine = detectSearchEngine();
@@ -92,42 +256,72 @@ console.log("3 content");
     }
 
     // Check if we've already processed this page
-    if (
-      sessionStorage.getItem("luckySearchProcessed") === window.location.href
-    ) {
+    if (sessionStorage.getItem("SearchProcessed") === window.location.href) {
       return;
     }
 
     // Mark as processed
-    sessionStorage.setItem("luckySearchProcessed", window.location.href);
+    sessionStorage.setItem("SearchProcessed", window.location.href);
 
     // Wait a bit for results to load
     setTimeout(() => {
+      if (redirectCancelled) return;
+
       const resultUrl = extractNthResult(engine, config.resultIndex);
 
       if (resultUrl) {
-        console.log(
-          `Lucky Search: Redirecting to result #${config.resultIndex}:`,
-          resultUrl
-        );
-        window.location.href = resultUrl;
+        console.log(`Search: Found result #${config.resultIndex}:`, resultUrl);
+
+        // Notify background script to show page action
+        chrome.runtime.sendMessage({
+          action: "redirecting",
+          index: config.resultIndex,
+          url: resultUrl,
+        });
+
+        // Show notification
+        showRedirectNotification(resultUrl, config.resultIndex, 3000);
+
+        // Redirect after delay
+        redirectTimeout = setTimeout(() => {
+          if (!redirectCancelled) {
+            console.log("i am not uncertain: Redirecting now...");
+            window.location.href = resultUrl;
+            chrome.runtime.sendMessage({ action: "redirectComplete" });
+          }
+        }, 3000);
       } else {
         console.log(
-          `Lucky Search: Could not find result #${config.resultIndex}`
+          `i am not uncertain: Could not find result #${config.resultIndex}`
         );
-        // Clear the processed flag so user can try again
         sessionStorage.removeItem("luckySearchProcessed");
+        chrome.runtime.sendMessage({ action: "redirectFailed" });
       }
     }, 500);
   }
 
+  // Listen for cancel message from background (page action click)
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "cancelRedirect") {
+      cancelRedirect();
+    }
+  });
+
+  // Listen for ESC key to cancel
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && redirectTimeout) {
+      cancelRedirect();
+    }
+  });
+
   // Load settings and run
   chrome.storage.sync.get(
-    ["enabled", "resultIndex", "enabledEngines"],
+    ["enabled", "resultIndex", "enabledEngines", "showNotification"],
     (result) => {
       config.enabled = result.enabled !== false;
       config.resultIndex = result.resultIndex || 1;
       config.enabledEngines = result.enabledEngines || {};
+      config.showNotification = result.showNotification !== false;
 
       // Enable all engines by default on first run
       if (Object.keys(config.enabledEngines).length === 0) {
@@ -153,6 +347,9 @@ console.log("3 content");
       }
       if (changes.enabledEngines) {
         config.enabledEngines = changes.enabledEngines.newValue;
+      }
+      if (changes.showNotification) {
+        config.showNotification = changes.showNotification.newValue;
       }
     }
   });
