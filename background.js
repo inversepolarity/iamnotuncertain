@@ -21,13 +21,13 @@ browserAPI.storage.sync
   .get(["enabled"])
   .then((result) => {
     isEnabled = result.enabled !== false;
-    updateIcon();
+    updateIcon(isEnabled);
   })
   .catch(() => {
     // Fallback for Chrome callback style
     browserAPI.storage.sync.get(["enabled"], (result) => {
       isEnabled = result.enabled !== false;
-      updateIcon();
+      updateIcon(isEnabled);
     });
   });
 
@@ -161,7 +161,7 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
 browserAPI.storage.onChanged.addListener((changes, area) => {
   if (area === "sync" && changes.enabled) {
     isEnabled = changes.enabled.newValue;
-    updateIcon();
+    updateIcon(isEnabled);
   }
 });
 
