@@ -122,12 +122,12 @@ browserAPI.action.onClicked.addListener((tab) => {
   browserAPI.storage.sync
     .set({ enabled: isEnabled })
     .then(() => {
-      updateIcon();
+      updateIcon(isEnabled);
     })
     .catch(() => {
       // Fallback
       browserAPI.storage.sync.set({ enabled: isEnabled }, () => {
-        updateIcon();
+        updateIcon(isEnabled);
       });
     });
 });
