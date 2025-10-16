@@ -200,3 +200,45 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+const resultIndexInput = document.getElementById("resultIndex");
+
+// Validate on input change
+resultIndexInput.addEventListener("input", function () {
+  let value = parseInt(this.value);
+
+  // Remove non-numeric characters
+  this.value = this.value.replace(/[^0-9]/g, "");
+
+  // If empty, don't validate yet
+  if (this.value === "") return;
+
+  // Clamp value between 1 and 5
+  if (value < 1) {
+    this.value = "1";
+  } else if (value > 5) {
+    this.value = "5";
+  }
+});
+
+// Validate on blur (when user leaves the field)
+resultIndexInput.addEventListener("blur", function () {
+  // If empty or invalid, set to 1
+  if (this.value === "" || parseInt(this.value) < 1) {
+    this.value = "1";
+  } else if (parseInt(this.value) > 5) {
+    this.value = "5";
+  }
+});
+
+// Prevent invalid input on paste
+resultIndexInput.addEventListener("paste", function (e) {
+  setTimeout(() => {
+    let value = parseInt(this.value);
+    if (isNaN(value) || value < 1) {
+      this.value = "1";
+    } else if (value > 5) {
+      this.value = "5";
+    }
+  }, 0);
+});
