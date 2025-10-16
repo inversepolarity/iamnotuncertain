@@ -323,8 +323,43 @@
     sessionStorage.removeItem("SearchProcessed");
   }
 
-  // Main redirect logic
-  function attemptRedirect() {
+  // Add this waitForResults function before attemptRedirect
+  function waitForResults(engine, maxAttempts = 20) {
+    return new Promise((resolve) => {
+      let attempts = 0;
+
+      const checkForResults = () => {
+        attempts++;
+
+        // Try to find any results
+        for (const selector of engine.selectors) {
+          const links = document.querySelectorAll(selector);
+          if (links.length > 0) {
+            console.log(
+              `✓ ${engine.name}: Found ${links.length} results after ${
+                attempts * 250
+              }ms`
+            );
+            resolve(true);
+            return;
+          }
+        }
+
+        // Keep trying
+        if (attempts < maxAttempts) {
+          setTimeout(checkForResults, 250); // Check every 250ms
+        } else {
+          console.warn(`⚠ ${engine.name}: Timeout waiting for results`);
+          resolve(false); // Timeout after 5 seconds (20 * 250ms)
+        }
+      };
+
+      checkForResults();
+    });
+  }
+
+  // Make attemptRedirect async
+  async function attemptRedirect() {
     const searchEngine = detectSearchEngine();
 
     if (!searchEngine) {
@@ -333,62 +368,59 @@
 
     const { key, engine } = searchEngine;
 
-    // Check if this engine is enabled
     if (!config.enabledEngines[key]) {
       return;
     }
 
-    // Check if search query exists
     if (!hasSearchQuery(engine)) {
       return;
     }
 
-    // Check if we've already processed this page
     if (sessionStorage.getItem("SearchProcessed") === window.location.href) {
       return;
     }
 
-    // Mark as processed
     sessionStorage.setItem("SearchProcessed", window.location.href);
 
-    // Wait a bit for results to load
-    setTimeout(() => {
-      if (redirectCancelled) return;
+    // Wait for results to actually load (polls until found)
+    console.log(`Waiting for ${engine.name} results...`);
+    const resultsFound = await waitForResults(engine);
 
-      //TODO: i am not uncertain: Could not find result #1 content.js:300:17
-      const resultUrl = extractNthResult(engine, config.resultIndex);
+    if (redirectCancelled) return;
 
-      if (resultUrl) {
-        console.log(`Search: Found result #${config.resultIndex}:`, resultUrl);
+    if (!resultsFound) {
+      console.log(`⚠ No results found for ${engine.name}`);
+      sessionStorage.removeItem("SearchProcessed");
+      chrome.runtime.sendMessage({ action: "redirectFailed" });
+      return;
+    }
 
-        // Notify background script to show page action
-        chrome.runtime.sendMessage({
-          action: "redirecting",
-          index: config.resultIndex,
-          url: resultUrl,
-        });
+    const resultUrl = extractNthResult(engine, config.resultIndex);
 
-        // Show notification
-        showRedirectNotification(resultUrl, config.resultIndex, 1000);
+    if (resultUrl) {
+      console.log(`✓ Found result #${config.resultIndex}:`, resultUrl);
 
-        // Redirect after delay
-        redirectTimeout = setTimeout(() => {
-          if (!redirectCancelled) {
-            console.log("i am not uncertain: Redirecting now...");
-            window.location.href = resultUrl;
-            chrome.runtime.sendMessage({ action: "redirectComplete" });
-          }
-        }, 1000);
-      } else {
-        console.log(
-          `i am not uncertain: Could not find result #${config.resultIndex}`
-        );
-        sessionStorage.removeItem("SearchProcessed");
-        chrome.runtime.sendMessage({ action: "redirectFailed" });
-      }
-    }, 500);
+      chrome.runtime.sendMessage({
+        action: "redirecting",
+        index: config.resultIndex,
+        url: resultUrl,
+      });
+
+      showRedirectNotification(resultUrl, config.resultIndex, 1000);
+
+      redirectTimeout = setTimeout(() => {
+        if (!redirectCancelled) {
+          console.log("→ Redirecting now...");
+          window.location.href = resultUrl;
+          chrome.runtime.sendMessage({ action: "redirectComplete" });
+        }
+      }, 1000);
+    } else {
+      console.log(`✗ Could not find result #${config.resultIndex}`);
+      sessionStorage.removeItem("SearchProcessed");
+      chrome.runtime.sendMessage({ action: "redirectFailed" });
+    }
   }
-
   // Listen for cancel message from background (page action click)
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "cancelRedirect") {
@@ -424,6 +456,38 @@
       }
     }
   );
+
+  // Load settings and run - WAIT FOR PAGE LOAD
+  function init() {
+    chrome.storage.sync.get(
+      ["enabled", "resultIndex", "enabledEngines", "showNotification"],
+      (result) => {
+        config.enabled = result.enabled !== false;
+        config.resultIndex = result.resultIndex || 1;
+        config.enabledEngines = result.enabledEngines || {};
+        config.showNotification = result.showNotification !== false;
+
+        // Enable all engines by default on first run
+        if (Object.keys(config.enabledEngines).length === 0) {
+          for (const key of Object.keys(SEARCH_ENGINES)) {
+            config.enabledEngines[key] = true;
+          }
+        }
+
+        if (config.enabled) {
+          attemptRedirect();
+        }
+      }
+    );
+  }
+
+  // Wait for page to be ready before running
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    // DOM already loaded
+    init();
+  }
 
   // Listen for settings changes
   chrome.storage.onChanged.addListener((changes, area) => {

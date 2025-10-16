@@ -19,17 +19,25 @@ const SEARCH_ENGINES = {
       "policies.google",
     ],
   },
-
   bing: {
     name: "Bing",
     domains: ["bing.com", "www.bing.com"],
     searchPath: "/search",
     queryParam: "q",
     selectors: [
-      '#b_results .b_algo h2 a[href^="http"]',
-      '#b_results li.b_algo a[href^="http"]',
+      "#b_results .b_algo h2 a",
+      "#b_results li.b_algo a",
+      "main ol#b_results li h2 a",
     ],
-    excludePatterns: ["bing.com", "microsoft.com/en-us/bing"],
+    excludePatterns: [
+      // Remove "bing.com" entirely, or be more specific:
+      "bing.com/search", // Keep this
+      "bing.com/maps",
+      "bing.com/videos",
+      "microsoft.com/en-us/bing",
+      "microsofttranslator.com",
+      // Don't exclude all bing.com URLs!
+    ],
   },
 
   duckduckgo: {
@@ -112,7 +120,14 @@ const SEARCH_ENGINES = {
       'a[data-testid="serp-link"][href^="http"]',
       '.external[href^="http"]',
     ],
-    excludePatterns: ["qwant.com"],
+    excludePatterns: [
+      "qwant.com/search", // Specific paths only
+      "qwant.com/maps",
+      "qwant.com/settings",
+      "help.qwant.com",
+      "about.qwant.com",
+      // Don't exclude all qwant.com URLs!
+    ],
   },
 
   yandex: {
