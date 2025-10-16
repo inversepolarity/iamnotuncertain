@@ -3,6 +3,8 @@
 ## i am not uncertain
 omnibar search → nth result. press escape to cancel.
 
+![options](/usage.png)
+
 ## search engines supported
 
 - google
@@ -15,8 +17,3 @@ omnibar search → nth result. press escape to cancel.
 - yahoo
 - startpage
 - yandex
-
-![options](/options.png)
-
-<!-- TODO: submit cws -->
-<!-- TODO: submit ffstore -->

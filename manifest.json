@@ -6,11 +6,23 @@
   
   "browser_specific_settings": {
     "gecko": {
-      "id": "suraj@evenzero.in",
-      "strict_min_version": "109.0"
+      "id": "info@evenzero.in",
+      "strict_min_version": "109.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   },
   
+  "developer": {
+    "name": "evenzero",
+    "url": "https://evenzero.in"
+  },
+  
+  "gecko": {
+    "id": "your-extension@yourdomain.com"
+  },
+
   "permissions": [
     "storage",
     "scripting",

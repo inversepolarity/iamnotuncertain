@@ -148,25 +148,9 @@
         ? chrome.runtime.getURL("icons/redirecting32.png")
         : "icons/redirecting32.png";
 
-    notification.innerHTML = `
-    <div style="
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: ${colors.bg};
-      color: ${colors.text};
-      padding: 16px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 16px ${colors.shadow};
-      z-index: 999999;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      font-size: 14px;
-      min-width: 340px;
-      max-width: 400px;
-      animation: slideIn 0.3s ease;
-      border: 1px solid ${colors.border};
-    ">
-      <style>
+    // Create style element
+    const style = document.createElement("style");
+    style.textContent = `
         @keyframes slideIn {
           from { transform: translateX(400px); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
@@ -182,27 +166,69 @@
         .search-fade-out {
           animation: slideOut 0.3s ease !important;
         }
-      </style>
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-        <div style="
-          width: 20px;
-          height: 20px;
-          border: 2px solid ${colors.spinnerBorder};
-          border-top-color: ${colors.spinnerTop};
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        ">
-      </div>
-        <div style="flex: 1;">
-          <div style="font-weight: 600; margin-bottom: 4px; font-size: 14px; letter-spacing: -0.2px;">
-            Redirecting to result #${index}
-          </div>
-          <div style="font-size: 12px; opacity: 0.7; font-weight: 500;">
-            <span id="countdown">${delay / 1000}</span>s remaining
-          </div>
-        </div>
-      </div>
-      <div style="
+      `;
+
+    // Create main container
+    const container = document.createElement("div");
+    container.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${colors.bg};
+      color: ${colors.text};
+      padding: 16px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 16px ${colors.shadow};
+      z-index: 999999;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      min-width: 340px;
+      max-width: 400px;
+      animation: slideIn 0.3s ease;
+      border: 1px solid ${colors.border};
+    `;
+
+    // Create header section
+    const header = document.createElement("div");
+    header.style.cssText =
+      "display: flex; align-items: center; gap: 12px; margin-bottom: 12px;";
+
+    // Create spinner
+    const spinner = document.createElement("div");
+    spinner.style.cssText = `
+      width: 20px;
+      height: 20px;
+      border: 2px solid ${colors.spinnerBorder};
+      border-top-color: ${colors.spinnerTop};
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    `;
+
+    // Create text container
+    const textContainer = document.createElement("div");
+    textContainer.style.cssText = "flex: 1;";
+
+    // Create title
+    const title = document.createElement("div");
+    title.style.cssText =
+      "font-weight: 600; margin-bottom: 4px; font-size: 14px; letter-spacing: -0.2px;";
+    title.textContent = `Redirecting to result #${index}`;
+
+    // Create countdown container
+    const countdownContainer = document.createElement("div");
+    countdownContainer.style.cssText =
+      "font-size: 12px; opacity: 0.7; font-weight: 500;";
+
+    const countdownSpan = document.createElement("span");
+    countdownSpan.id = "countdown";
+    countdownSpan.textContent = String(delay / 1000);
+
+    countdownContainer.appendChild(countdownSpan);
+    countdownContainer.appendChild(document.createTextNode("s remaining"));
+
+    // Create URL display
+    const urlDisplay = document.createElement("div");
+    urlDisplay.style.cssText = `
         font-size: 12px;
         opacity: 0.6;
         margin-bottom: 12px;
@@ -213,10 +239,13 @@
         background: ${colors.urlBg};
         border-radius: 4px;
         font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-      " title="${resultUrl}">
-        ${resultUrl}
-      </div>
-      <div style="
+      `;
+    urlDisplay.title = resultUrl;
+    urlDisplay.textContent = resultUrl;
+
+    // Create cancel message
+    const cancelMessage = document.createElement("div");
+    cancelMessage.style.cssText = `
         font-size: 12px;
         opacity: 0.8;
         padding: 8px 10px;
@@ -224,17 +253,39 @@
         border-radius: 4px;
         text-align: center;
         border: 1px solid ${colors.cancelBorder};
-      ">
-        Click the icon in address bar or press <strong style="font-weight: 600;">ESC</strong> to cancel
-      </div>
-      <img src="${iconUrl}" style="
+      `;
+    cancelMessage.appendChild(
+      document.createTextNode("Click the icon in address bar or press ")
+    );
+    const strong = document.createElement("strong");
+    strong.style.fontWeight = "600";
+    strong.textContent = "ESC";
+    cancelMessage.appendChild(strong);
+    cancelMessage.appendChild(document.createTextNode(" to cancel"));
+
+    // Create icon
+    const icon = document.createElement("img");
+    icon.src = iconUrl;
+    icon.alt = "";
+    icon.style.cssText = `
         position: absolute;
         top: 6px;
         right: 6px;
         width: 20px;
         height: 20px;
-        pointer-events: none;" alt="" />
-    </div>`;
+        pointer-events: none;`;
+
+    // Assemble the structure
+    textContainer.appendChild(title);
+    textContainer.appendChild(countdownContainer);
+    header.appendChild(spinner);
+    header.appendChild(textContainer);
+    container.appendChild(style);
+    container.appendChild(header);
+    container.appendChild(urlDisplay);
+    container.appendChild(cancelMessage);
+    container.appendChild(icon);
+    notification.appendChild(container);
 
     document.body.appendChild(notification);
 
@@ -268,8 +319,9 @@
         ? chrome.runtime.getURL("icons/redirecting32.png")
         : "icons/redirecting32.png";
 
-    cancelled.innerHTML = `
-      <div style="
+    // Create main container
+    const container = document.createElement("div");
+    container.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
@@ -283,16 +335,32 @@
         font-size: 14px;
         font-weight: 500;
         animation: slideIn 0.3s ease;
-      ">
-      <div style="display: flex; flex-direction: row; gap: 8px;">
-        <img src="${iconUrl}" style="
+      `;
+
+    // Create flex container
+    const flexContainer = document.createElement("div");
+    flexContainer.style.cssText =
+      "display: flex; flex-direction: row; gap: 8px;";
+
+    // Create icon
+    const icon = document.createElement("img");
+    icon.src = iconUrl;
+    icon.alt = "";
+    icon.style.cssText = `
           width: 20px;
           height: 20px;
-          pointer-events: none;" alt="" /> 
-          <div> Redirect cancelled </div>
-        </div>
-      </div>
-    `;
+          pointer-events: none;`;
+
+    // Create text div
+    const textDiv = document.createElement("div");
+    textDiv.textContent = " Redirect cancelled ";
+
+    // Assemble structure
+    flexContainer.appendChild(icon);
+    flexContainer.appendChild(textDiv);
+    container.appendChild(flexContainer);
+    cancelled.appendChild(container);
+
     document.body.appendChild(cancelled);
     setTimeout(() => {
       const div = cancelled.querySelector("div");
