@@ -1,13 +1,17 @@
 // Use browser API (Firefox) with fallback to chrome API
 const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
-const ICON_ACTIVE_16 = "icons/icon16_active.png";
-const ICON_ACTIVE_32 = "icons/icon32_active.png";
-const ICON_ACTIVE_48 = "icons/icon48_active.png";
+const ICON_ACTIVE = {
+  16: "icons/icon16_active.png",
+  32: "icons/icon32_active.png",
+  48: "icons/icon48_active.png",
+};
 
-const ICON_DEACTIVATED_16 = "icons/icon16_inactive.png";
-const ICON_DEACTIVATED_32 = "icons/icon32_inactive.png";
-const ICON_DEACTIVATED_48 = "icons/icon48_inactive.png";
+const ICON_INACTIVE = {
+  16: "icons/icon16_inactive.png",
+  32: "icons/icon32_inactive.png",
+  48: "icons/icon48_inactive.png",
+};
 
 let isEnabled = true;
 let redirectState = new Map();
@@ -28,24 +32,12 @@ browserAPI.storage.sync
   });
 
 // Update toolbar icon
-function updateIcon() {
-  const iconPath16 = isEnabled ? ICON_ACTIVE_16 : ICON_DEACTIVATED_16;
-  const iconPath32 = isEnabled ? ICON_ACTIVE_32 : ICON_DEACTIVATED_32;
-  const iconPath48 = isEnabled ? ICON_ACTIVE_48 : ICON_DEACTIVATED_48;
+function updateIcon(enabled) {
+  const iconPaths = enabled ? ICON_ACTIVE : ICON_INACTIVE;
 
-  const title = isEnabled
-    ? "IANU: Enabled (click to disable)"
-    : "IANU: Disabled (click to enable)";
-
-  browserAPI.action.setIcon({
-    path: {
-      16: iconPath16,
-      32: iconPath32,
-      48: iconPath48,
-    },
+  browserAPI.action.setIcon({ path: iconPaths }).catch((err) => {
+    console.log("Icon update error:", err);
   });
-
-  browserAPI.action.setTitle({ title });
 }
 
 // Show page action when redirecting
@@ -92,7 +84,7 @@ async function showCancelledState(tabId) {
   try {
     await browserAPI.pageAction.setTitle({
       tabId,
-      title: "⛔ Redirect cancelled",
+      title: "Redirect cancelled",
     });
 
     await browserAPI.pageAction.setIcon({
@@ -191,5 +183,25 @@ browserAPI.tabs.onUpdated.addListener((tabId, changeInfo) => {
     } else if (state && state.status !== "cancelled") {
       hidePageAction(tabId);
     }
+  }
+});
+
+// Initialize on install/startup
+browserAPI.runtime.onInstalled.addListener(() => {
+  browserAPI.storage.sync.get(["enabled"], (result) => {
+    isEnabled = result.enabled !== false;
+    updateIcon(isEnabled);
+  });
+});
+
+// Listen for storage changes from options page
+browserAPI.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && changes.enabled) {
+    isEnabled = changes.enabled.newValue;
+    updateIcon(isEnabled);
+    console.log(
+      "Background: Icon updated to",
+      isEnabled ? "active" : "inactive"
+    );
   }
 });

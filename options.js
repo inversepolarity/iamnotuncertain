@@ -1,6 +1,18 @@
 // Use browser API with fallback
 const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
+const ICON_ACTIVE = {
+  16: "icons/icon16_active.png",
+  32: "icons/icon32_active.png",
+  48: "icons/icon48_active.png",
+};
+
+const ICON_INACTIVE = {
+  16: "icons/icon16_inactive.png",
+  32: "icons/icon32_inactive.png",
+  48: "icons/icon48_inactive.png",
+};
+
 function updateOrdinal(n) {
   const ordinals = ["th", "st", "nd", "rd"];
   const v = n % 100;
@@ -11,7 +23,6 @@ function updateOrdinal(n) {
 function updateStatusIndicator(enabled) {
   const icon = document.getElementById("statusIcon");
   const text = document.getElementById("statusText");
-  //TODO: toggle globally aka action switch
 
   if (enabled) {
     icon.src = "icons/icon48_active.png";
@@ -20,6 +31,14 @@ function updateStatusIndicator(enabled) {
     icon.src = "icons/icon48_inactive.png";
     text.textContent = "Disabled";
   }
+}
+
+function updateToolbarIcon(enabled) {
+  const iconPaths = enabled ? ICON_ACTIVE : ICON_INACTIVE;
+
+  browserAPI.action.setIcon({ path: iconPaths }).catch((err) => {
+    console.log("Icon update:", err);
+  });
 }
 
 function populateEngines(enabledEngines = {}) {
@@ -44,13 +63,52 @@ function populateEngines(enabledEngines = {}) {
     item.appendChild(checkbox);
     item.appendChild(label);
     grid.appendChild(item);
+
+    // Auto-save on change
+    checkbox.addEventListener("change", saveSettings);
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  browserAPI.storage.sync
-    .get(["enabled", "resultIndex", "enabledEngines", "showNotification"])
-    .then((result) => {
+function showSavedMessage() {
+  const status = document.getElementById("status");
+  status.style.display = "block";
+  status.textContent = "✓ Saved";
+  setTimeout(() => {
+    status.style.display = "none";
+  }, 1000);
+}
+
+function saveSettings() {
+  const enabled = document.getElementById("enabled").checked;
+  const resultIndex = parseInt(document.getElementById("resultIndex").value);
+  const showNotification = document.getElementById("showNotification").checked;
+
+  const enabledEngines = {};
+  Object.keys(SEARCH_ENGINES).forEach((key) => {
+    const checkbox = document.getElementById(`engine-${key}`);
+    if (checkbox) {
+      enabledEngines[key] = checkbox.checked;
+    }
+  });
+
+  browserAPI.storage.sync.set(
+    {
+      enabled,
+      resultIndex,
+      enabledEngines,
+      showNotification,
+    },
+    () => {
+      showSavedMessage();
+      updateToolbarIcon(enabled);
+    }
+  );
+}
+
+function loadSettings() {
+  browserAPI.storage.sync.get(
+    ["enabled", "resultIndex", "enabledEngines", "showNotification"],
+    (result) => {
       const enabled = result.enabled !== false;
       const resultIndex = result.resultIndex || 1;
       const showNotification = result.showNotification !== false;
@@ -62,94 +120,83 @@ document.addEventListener("DOMContentLoaded", () => {
       updateStatusIndicator(enabled);
       updateOrdinal(resultIndex);
       populateEngines(result.enabledEngines || {});
-    })
-    .catch(() => {
-      // Fallback
-      browserAPI.storage.sync.get(
-        ["enabled", "resultIndex", "enabledEngines", "showNotification"],
-        (result) => {
-          const enabled = result.enabled !== false;
-          const resultIndex = result.resultIndex || 1;
-          const showNotification = result.showNotification !== false;
+    }
+  );
+}
 
-          document.getElementById("enabled").checked = enabled;
-          document.getElementById("resultIndex").value = resultIndex;
-          document.getElementById("showNotification").checked =
-            showNotification;
+// Listen for changes from other sources (popup/background)
+browserAPI.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync") {
+    if (changes.enabled) {
+      const enabledToggle = document.getElementById("enabled");
+      if (enabledToggle.checked !== changes.enabled.newValue) {
+        enabledToggle.checked = changes.enabled.newValue;
+        updateStatusIndicator(changes.enabled.newValue);
+        console.log("Options: Synced enabled state from external source");
+      }
+    }
 
-          updateStatusIndicator(enabled);
-          updateOrdinal(resultIndex);
-          populateEngines(result.enabledEngines || {});
-        }
-      );
-    });
+    if (changes.resultIndex) {
+      const indexInput = document.getElementById("resultIndex");
+      if (parseInt(indexInput.value) !== changes.resultIndex.newValue) {
+        indexInput.value = changes.resultIndex.newValue;
+        updateOrdinal(changes.resultIndex.newValue);
+      }
+    }
+
+    if (changes.showNotification) {
+      const notifToggle = document.getElementById("showNotification");
+      if (notifToggle.checked !== changes.showNotification.newValue) {
+        notifToggle.checked = changes.showNotification.newValue;
+      }
+    }
+
+    if (changes.enabledEngines) {
+      populateEngines(changes.enabledEngines.newValue);
+    }
+  }
 });
 
-document.getElementById("enabled").addEventListener("change", (e) => {
-  updateStatusIndicator(e.target.checked);
-});
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", () => {
+  loadSettings();
 
-document.getElementById("resultIndex").addEventListener("input", (e) => {
-  updateOrdinal(parseInt(e.target.value) || 1);
-});
-
-document.getElementById("save").addEventListener("click", () => {
-  const enabled = document.getElementById("enabled").checked;
-  const resultIndex = parseInt(document.getElementById("resultIndex").value);
-  const showNotification = document.getElementById("showNotification").checked;
-
-  const enabledEngines = {};
-  Object.keys(SEARCH_ENGINES).forEach((key) => {
-    const checkbox = document.getElementById(`engine-${key}`);
-    enabledEngines[key] = checkbox.checked;
+  // Auto-save listeners
+  document.getElementById("enabled").addEventListener("change", (e) => {
+    updateStatusIndicator(e.target.checked);
+    saveSettings();
   });
 
-  browserAPI.storage.sync
-    .set({
-      enabled,
-      resultIndex,
-      enabledEngines,
-      showNotification,
-    })
-    .then(() => {
-      const status = document.getElementById("status");
-      status.style.display = "block";
-      setTimeout(() => {
-        status.style.display = "none";
-      }, 1000);
-    })
-    .catch(() => {
-      // Fallback
-      browserAPI.storage.sync.set(
-        {
-          enabled,
-          resultIndex,
-          enabledEngines,
-          showNotification,
-        },
-        () => {
-          const status = document.getElementById("status");
-          status.style.display = "block";
-          setTimeout(() => {
-            status.style.display = "none";
-          }, 1000);
+  document.getElementById("resultIndex").addEventListener("input", (e) => {
+    updateOrdinal(parseInt(e.target.value) || 1);
+  });
+
+  document
+    .getElementById("resultIndex")
+    .addEventListener("change", saveSettings);
+
+  document
+    .getElementById("showNotification")
+    .addEventListener("change", saveSettings);
+
+  // Reset button
+  document.getElementById("reset").addEventListener("click", () => {
+    if (confirm("Reset all settings to defaults?")) {
+      document.getElementById("enabled").checked = true;
+      document.getElementById("resultIndex").value = 1;
+      document.getElementById("showNotification").checked = true;
+
+      updateStatusIndicator(true);
+      updateOrdinal(1);
+
+      Object.keys(SEARCH_ENGINES).forEach((key) => {
+        const checkbox = document.getElementById(`engine-${key}`);
+        if (checkbox) {
+          checkbox.checked = true;
         }
-      );
-    });
-});
+      });
 
-document.getElementById("reset").addEventListener("click", () => {
-  if (confirm("Reset all settings to defaults?")) {
-    document.getElementById("enabled").checked = true;
-    document.getElementById("resultIndex").value = 1;
-    document.getElementById("showNotification").checked = true;
-
-    updateStatusIndicator(true);
-    updateOrdinal(1);
-
-    Object.keys(SEARCH_ENGINES).forEach((key) => {
-      const checkbox = document.getElementById(`engine-${key}`);
-      checkbox.checked = true;
-    });
-  }
+      saveSettings();
+    }
+  });
 });
