@@ -85,92 +85,161 @@
       existing.remove();
     }
 
+    // Detect browser theme with multiple fallbacks
+    function detectTheme() {
+      // Method 1: Check prefers-color-scheme
+      const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      if (darkModeQuery.media !== "not all") {
+        if (darkModeQuery.matches) return "dark";
+      }
+
+      // Method 2: Check page background color as fallback
+      const bgColor = window.getComputedStyle(document.body).backgroundColor;
+      if (bgColor) {
+        const rgb = bgColor.match(/\d+/g);
+        if (rgb && rgb.length >= 3) {
+          const brightness =
+            (parseInt(rgb[0]) * 299 +
+              parseInt(rgb[1]) * 587 +
+              parseInt(rgb[2]) * 114) /
+            1000;
+          if (brightness < 128) return "dark";
+        }
+      }
+
+      // Default to light theme
+      return "light";
+    }
+
+    const theme = detectTheme();
+    const prefersDark = theme === "dark";
+
+    // Define color schemes
+    const colors = prefersDark
+      ? {
+          bg: "#1a1a1a",
+          text: "white",
+          border: "rgba(255, 255, 255, 0.1)",
+          shadow: "rgba(0, 0, 0, 0.2)",
+          spinnerBorder: "rgba(255, 255, 255, 0.2)",
+          spinnerTop: "white",
+          urlBg: "rgba(255, 255, 255, 0.05)",
+          cancelBg: "rgba(255, 255, 255, 0.08)",
+          cancelBorder: "rgba(255, 255, 255, 0.1)",
+        }
+      : {
+          bg: "#ffffff",
+          text: "#1a1a1a",
+          border: "rgba(0, 0, 0, 0.1)",
+          shadow: "rgba(0, 0, 0, 0.15)",
+          spinnerBorder: "rgba(0, 0, 0, 0.2)",
+          spinnerTop: "#1a1a1a",
+          urlBg: "rgba(0, 0, 0, 0.05)",
+          cancelBg: "rgba(0, 0, 0, 0.08)",
+          cancelBorder: "rgba(0, 0, 0, 0.15)",
+        };
+
     const notification = document.createElement("div");
     notification.id = "search-notification";
+
+    // Get the icon URL
+    const iconUrl =
+      typeof chrome !== "undefined" && chrome.runtime
+        ? chrome.runtime.getURL("icons/redirecting32.png")
+        : "icons/redirecting32.png";
+
     notification.innerHTML = `
-      <div style="
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #1a1a1a;
-        color: white;
-        padding: 16px 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
-        z-index: 999999;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        font-size: 14px;
-        min-width: 340px;
-        max-width: 400px;
-        animation: slideIn 0.3s ease;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      ">
-        <style>
-          @keyframes slideIn {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-          }
-          @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(400px); opacity: 0; }
-          }
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          .search-fade-out {
-            animation: slideOut 0.3s ease !important;
-          }
-        </style>
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-          <div style="
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-          "></div>
-          <div style="flex: 1;">
-            <div style="font-weight: 600; margin-bottom: 4px; font-size: 14px; letter-spacing: -0.2px;">
-              Redirecting to result #${index}
-            </div>
-            <div style="font-size: 12px; opacity: 0.7; font-weight: 500;">
-              <span id="countdown">${delay / 1000}</span>s remaining
-            </div>
+    <div style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${colors.bg};
+      color: ${colors.text};
+      padding: 16px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 16px ${colors.shadow};
+      z-index: 999999;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      min-width: 340px;
+      max-width: 400px;
+      animation: slideIn 0.3s ease;
+      border: 1px solid ${colors.border};
+    ">
+      <style>
+        @keyframes slideIn {
+          from { transform: translateX(400px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(400px); opacity: 0; }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .search-fade-out {
+          animation: slideOut 0.3s ease !important;
+        }
+      </style>
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="
+          width: 20px;
+          height: 20px;
+          border: 2px solid ${colors.spinnerBorder};
+          border-top-color: ${colors.spinnerTop};
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        ">
+      </div>
+        <div style="flex: 1;">
+          <div style="font-weight: 600; margin-bottom: 4px; font-size: 14px; letter-spacing: -0.2px;">
+            Redirecting to result #${index}
+          </div>
+          <div style="font-size: 12px; opacity: 0.7; font-weight: 500;">
+            <span id="countdown">${delay / 1000}</span>s remaining
           </div>
         </div>
-        <div style="
-          font-size: 12px;
-          opacity: 0.6;
-          margin-bottom: 12px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          padding: 8px 10px;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 4px;
-          font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-        " title="${resultUrl}">
-          ${resultUrl}
-        </div>
-        <div style="
-          font-size: 12px;
-          opacity: 0.8;
-          padding: 8px 10px;
-          background: rgba(255, 255, 255, 0.08);
-          border-radius: 4px;
-          text-align: center;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        ">
-          Click the icon in address bar or press <strong style="font-weight: 600;">ESC</strong> to cancel
-        </div>
-      </div>`;
+      </div>
+      <div style="
+        font-size: 12px;
+        opacity: 0.6;
+        margin-bottom: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 8px 10px;
+        background: ${colors.urlBg};
+        border-radius: 4px;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      " title="${resultUrl}">
+        ${resultUrl}
+      </div>
+      <div style="
+        font-size: 12px;
+        opacity: 0.8;
+        padding: 8px 10px;
+        background: ${colors.cancelBg};
+        border-radius: 4px;
+        text-align: center;
+        border: 1px solid ${colors.cancelBorder};
+      ">
+        Click the icon in address bar or press <strong style="font-weight: 600;">ESC</strong> to cancel
+      </div>
+      <img src="${iconUrl}" style="
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 20px;
+        height: 20px;
+        pointer-events: none;" alt="" />
+    </div>`;
 
     document.body.appendChild(notification);
 
     // Countdown
-    let remaining = 2000 / 1000;
+    let remaining = delay / 1000;
     const countdownEl = document.getElementById("countdown");
     countdownInterval = setInterval(() => {
       remaining -= 0.1;
@@ -192,6 +261,13 @@
 
   function showCancelledMessage() {
     const cancelled = document.createElement("div");
+
+    // Get the icon URL
+    const iconUrl =
+      typeof chrome !== "undefined" && chrome.runtime
+        ? chrome.runtime.getURL("icons/redirecting32.png")
+        : "icons/redirecting32.png";
+
     cancelled.innerHTML = `
       <div style="
         position: fixed;
@@ -208,7 +284,13 @@
         font-weight: 500;
         animation: slideIn 0.3s ease;
       ">
-        ⛔ Redirect cancelled
+      <div style="display: flex; flex-direction: row; gap: 8px;">
+        <img src="${iconUrl}" style="
+          width: 20px;
+          height: 20px;
+          pointer-events: none;" alt="" /> 
+          <div> Redirect cancelled </div>
+        </div>
       </div>
     `;
     document.body.appendChild(cancelled);
@@ -273,6 +355,7 @@
     setTimeout(() => {
       if (redirectCancelled) return;
 
+      //TODO: i am not uncertain: Could not find result #1 content.js:300:17
       const resultUrl = extractNthResult(engine, config.resultIndex);
 
       if (resultUrl) {

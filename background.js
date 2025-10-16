@@ -1,8 +1,13 @@
 // Use browser API (Firefox) with fallback to chrome API
 const browserAPI = typeof browser !== "undefined" ? browser : chrome;
 
-const ICON_ACTIVE = "icons/icon_active.png";
-const ICON_DEACTIVATED = "icons/icon_deactivated.png";
+const ICON_ACTIVE_16 = "icons/icon16_active.png";
+const ICON_ACTIVE_32 = "icons/icon32_active.png";
+const ICON_ACTIVE_48 = "icons/icon48_active.png";
+
+const ICON_DEACTIVATED_16 = "icons/icon16_inactive.png";
+const ICON_DEACTIVATED_32 = "icons/icon32_inactive.png";
+const ICON_DEACTIVATED_48 = "icons/icon48_inactive.png";
 
 let isEnabled = true;
 let redirectState = new Map();
@@ -24,16 +29,19 @@ browserAPI.storage.sync
 
 // Update toolbar icon
 function updateIcon() {
-  const iconPath = isEnabled ? ICON_ACTIVE : ICON_DEACTIVATED;
+  const iconPath16 = isEnabled ? ICON_ACTIVE_16 : ICON_DEACTIVATED_16;
+  const iconPath32 = isEnabled ? ICON_ACTIVE_32 : ICON_DEACTIVATED_32;
+  const iconPath48 = isEnabled ? ICON_ACTIVE_48 : ICON_DEACTIVATED_48;
+
   const title = isEnabled
     ? "IANU: Enabled (click to disable)"
     : "IANU: Disabled (click to enable)";
 
   browserAPI.action.setIcon({
     path: {
-      16: iconPath,
-      32: iconPath,
-      48: iconPath,
+      16: iconPath16,
+      32: iconPath32,
+      48: iconPath48,
     },
   });
 

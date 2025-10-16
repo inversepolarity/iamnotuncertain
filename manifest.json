@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "i am not uncertain",
   "version": "1.0",
-  "description": "Redirects to Nth search result instead of showing search results page",
+  "description": "omnibar search → nth result. press escape to cancel.",
   
   "browser_specific_settings": {
     "gecko": {
@@ -87,9 +87,9 @@
   
   "action": {
     "default_icon": {
-      "16": "icons/icon16.png",
-      "32": "icons/icon32.png",
-      "48": "icons/icon48.png"
+      "16": "icons/icon16_active.png",
+      "32": "icons/icon32_active.png",
+      "48": "icons/icon48_active.png"
     },
     "default_title": "i am not uncertain"
   },
@@ -118,9 +118,9 @@
   },
   
   "icons": {
-    "16": "icons/icon16.png",
-    "32": "icons/icon32.png",
-    "48": "icons/icon48.png",
+    "16": "icons/icon16_active.png",
+    "32": "icons/icon32_active.png",
+    "48": "icons/icon48_active.png",
     "128": "icons/icon128.png"
   }
 }

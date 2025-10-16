@@ -11,12 +11,13 @@ function updateOrdinal(n) {
 function updateStatusIndicator(enabled) {
   const icon = document.getElementById("statusIcon");
   const text = document.getElementById("statusText");
+  //TODO: toggle globally aka action switch
 
   if (enabled) {
-    icon.src = "icons/icon_active.png";
+    icon.src = "icons/icon48_active.png";
     text.textContent = "Enabled";
   } else {
-    icon.src = "icons/icon_deactivated.png";
+    icon.src = "icons/icon48_inactive.png";
     text.textContent = "Disabled";
   }
 }

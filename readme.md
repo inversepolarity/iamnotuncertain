@@ -17,3 +17,6 @@ omnibar search → nth result. press escape to cancel.
 - yandex
 
 ![options](/options.png)
+
+<!-- TODO: submit cws -->
+<!-- TODO: submit ffstore -->
