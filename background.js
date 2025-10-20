@@ -1,5 +1,6 @@
 // Use browser API (Firefox) with fallback to chrome API
 const browserAPI = typeof browser !== "undefined" ? browser : chrome;
+const isFirefox = typeof browser !== "undefined";
 
 const ICON_ACTIVE = {
   16: "icons/icon16_active.png",
@@ -11,6 +12,18 @@ const ICON_INACTIVE = {
   16: "icons/icon16_inactive.png",
   32: "icons/icon32_inactive.png",
   48: "icons/icon48_inactive.png",
+};
+
+const ICON_REDIRECTING = {
+  16: "icons/redirecting16.png",
+  32: "icons/redirecting32.png",
+  48: "icons/redirecting48.png",
+};
+
+const ICON_CANCELLED = {
+  16: "icons/cancelled16.png",
+  32: "icons/cancelled32.png",
+  48: "icons/cancelled48.png",
 };
 
 let isEnabled = true;
@@ -31,7 +44,7 @@ browserAPI.storage.sync
     });
   });
 
-// Update toolbar icon
+// Update toolbar icon (global state)
 function updateIcon(enabled) {
   const iconPaths = enabled ? ICON_ACTIVE : ICON_INACTIVE;
 
@@ -40,83 +53,123 @@ function updateIcon(enabled) {
   });
 }
 
-// Show page action when redirecting
-async function showPageAction(tabId, index, url) {
+// Show redirecting state - CROSS-BROWSER
+async function showRedirectingState(tabId, index, url) {
   try {
-    await browserAPI.pageAction.show(tabId);
-
-    await browserAPI.pageAction.setTitle({
-      tabId,
-      title: `⚡ Redirecting to result #${index} - Click to cancel`,
-    });
-
-    // Set redirecting icon
-    await browserAPI.pageAction.setIcon({
-      tabId,
-      path: {
-        16: "icons/redirecting_16.png",
-        32: "icons/redirecting_32.png",
-      },
-    });
-
     redirectState.set(tabId, {
       status: "redirecting",
       index,
       url,
     });
+
+    if (isFirefox) {
+      // Firefox: Use pageAction (shows in address bar)
+      await browserAPI.pageAction.show(tabId);
+      await browserAPI.pageAction.setTitle({
+        tabId,
+        title: `⚡ Redirecting to result #${index} - Click to cancel`,
+      });
+      await browserAPI.pageAction.setIcon({
+        tabId,
+        path: ICON_REDIRECTING,
+      });
+    } else {
+      // Chrome/Brave: Use action with tabId (changes toolbar icon for specific tab)
+      await browserAPI.action.setIcon({
+        tabId,
+        path: ICON_REDIRECTING,
+      });
+      await browserAPI.action.setTitle({
+        tabId,
+        title: `Redirecting to result #${index} - Click to cancel`,
+      });
+    }
   } catch (error) {
-    console.error("Error showing page action:", error);
+    console.error("Error showing redirecting state:", error);
   }
 }
 
-// Hide page action
-async function hidePageAction(tabId) {
+// Hide redirecting state - CROSS-BROWSER
+async function hideRedirectingState(tabId) {
   try {
-    await browserAPI.pageAction.hide(tabId);
     redirectState.delete(tabId);
+
+    if (isFirefox) {
+      await browserAPI.pageAction.hide(tabId);
+    } else {
+      // Chrome/Brave: Reset to default icon for this tab
+      await browserAPI.action.setIcon({
+        tabId,
+        path: isEnabled ? ICON_ACTIVE : ICON_INACTIVE,
+      });
+      await browserAPI.action.setTitle({
+        tabId,
+        title: "i am not uncertain",
+      });
+    }
   } catch (error) {
-    console.error("Error hiding page action:", error);
+    console.error("Error hiding redirecting state:", error);
   }
 }
 
-// Show cancelled state
+// Show cancelled state - CROSS-BROWSER
 async function showCancelledState(tabId) {
   try {
-    await browserAPI.pageAction.setTitle({
-      tabId,
-      title: "Redirect cancelled",
-    });
-
-    await browserAPI.pageAction.setIcon({
-      tabId,
-      path: {
-        16: "icons/cancelled_16.png",
-        32: "icons/cancelled_32.png",
-      },
-    });
-
     redirectState.set(tabId, { status: "cancelled" });
 
+    if (isFirefox) {
+      await browserAPI.pageAction.setTitle({
+        tabId,
+        title: "Redirect cancelled",
+      });
+      await browserAPI.pageAction.setIcon({
+        tabId,
+        path: ICON_CANCELLED,
+      });
+    } else {
+      // Chrome/Brave
+      await browserAPI.action.setIcon({
+        tabId,
+        path: ICON_CANCELLED,
+      });
+      await browserAPI.action.setTitle({
+        tabId,
+        title: "Redirect cancelled",
+      });
+    }
+
     setTimeout(() => {
-      hidePageAction(tabId);
+      hideRedirectingState(tabId);
     }, 2000);
   } catch (error) {
     console.error("Error showing cancelled state:", error);
   }
 }
 
-// Handle page action click
-browserAPI.pageAction.onClicked.addListener((tab) => {
+// Handle page action click (Firefox only)
+if (isFirefox && browserAPI.pageAction?.onClicked) {
+  browserAPI.pageAction.onClicked.addListener((tab) => {
+    const state = redirectState.get(tab.id);
+
+    if (state && state.status === "redirecting") {
+      browserAPI.tabs.sendMessage(tab.id, { action: "cancelRedirect" });
+      showCancelledState(tab.id);
+    }
+  });
+}
+
+// Handle toolbar icon click (action) - WORKS FOR BOTH BROWSERS
+browserAPI.action.onClicked.addListener((tab) => {
   const state = redirectState.get(tab.id);
 
-  if (state && state.status === "redirecting") {
+  // If currently redirecting on this tab, cancel it (Chrome/Brave behavior)
+  if (!isFirefox && state && state.status === "redirecting") {
     browserAPI.tabs.sendMessage(tab.id, { action: "cancelRedirect" });
     showCancelledState(tab.id);
+    return;
   }
-});
 
-// Handle toolbar icon click
-browserAPI.action.onClicked.addListener((tab) => {
+  // Otherwise toggle enabled state
   isEnabled = !isEnabled;
 
   browserAPI.storage.sync
@@ -140,15 +193,15 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   switch (message.action) {
     case "redirecting":
-      showPageAction(tabId, message.index, message.url);
+      showRedirectingState(tabId, message.index, message.url);
       break;
 
     case "redirectComplete":
-      hidePageAction(tabId);
+      hideRedirectingState(tabId);
       break;
 
     case "redirectFailed":
-      hidePageAction(tabId);
+      hideRedirectingState(tabId);
       break;
 
     case "redirectCancelled":
@@ -162,6 +215,10 @@ browserAPI.storage.onChanged.addListener((changes, area) => {
   if (area === "sync" && changes.enabled) {
     isEnabled = changes.enabled.newValue;
     updateIcon(isEnabled);
+    console.log(
+      "Background: Icon updated to",
+      isEnabled ? "active" : "inactive"
+    );
   }
 });
 
@@ -177,11 +234,11 @@ browserAPI.tabs.onUpdated.addListener((tabId, changeInfo) => {
     if (state && state.status === "redirecting") {
       setTimeout(() => {
         if (redirectState.get(tabId)?.status === "redirecting") {
-          hidePageAction(tabId);
+          hideRedirectingState(tabId);
         }
       }, 1000);
     } else if (state && state.status !== "cancelled") {
-      hidePageAction(tabId);
+      hideRedirectingState(tabId);
     }
   }
 });
@@ -192,16 +249,4 @@ browserAPI.runtime.onInstalled.addListener(() => {
     isEnabled = result.enabled !== false;
     updateIcon(isEnabled);
   });
-});
-
-// Listen for storage changes from options page
-browserAPI.storage.onChanged.addListener((changes, area) => {
-  if (area === "sync" && changes.enabled) {
-    isEnabled = changes.enabled.newValue;
-    updateIcon(isEnabled);
-    console.log(
-      "Background: Icon updated to",
-      isEnabled ? "active" : "inactive"
-    );
-  }
 });
