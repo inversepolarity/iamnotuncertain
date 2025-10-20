@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-
+  console.log("Content script loaded on:", window.location.href);
   let config = {
     enabled: true,
     resultIndex: 1,
@@ -28,7 +28,18 @@
   }
 
   // Check if current URL has a search query
+  // Check if current URL has a search query
   function hasSearchQuery(engine) {
+    // Engines that don't use URL params - check search input instead
+    if (engine.usesUrlParams === false) {
+      const searchInput =
+        document.querySelector('input[name="query"]') ||
+        document.querySelector('input[name="q"]') ||
+        document.querySelector('input[type="search"]');
+      return searchInput && searchInput.value.trim() !== "";
+    }
+
+    // Standard URL param check for most engines
     const params = new URLSearchParams(window.location.search);
     return (
       params.has(engine.queryParam) &&
@@ -87,23 +98,125 @@
 
     // Detect browser theme with multiple fallbacks
     function detectTheme() {
-      // Method 1: Check prefers-color-scheme
-      const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      if (darkModeQuery.media !== "not all") {
-        if (darkModeQuery.matches) return "dark";
+      // Method 1: Check for common dark mode classes/attributes on html or body
+      const htmlEl = document.documentElement;
+      const bodyEl = document.body;
+
+      const darkIndicators = [
+        "dark",
+        "dark-mode",
+        "dark-theme",
+        "theme-dark",
+        "night",
+        "night-mode",
+        "black-theme",
+      ];
+
+      const lightIndicators = [
+        "light",
+        "light-mode",
+        "light-theme",
+        "theme-light",
+        "day",
+      ];
+
+      // Check classList
+      const classList = [
+        ...Array.from(htmlEl.classList),
+        ...Array.from(bodyEl.classList),
+      ].map((c) => c.toLowerCase());
+
+      if (classList.some((c) => darkIndicators.some((d) => c.includes(d)))) {
+        return "dark";
+      }
+      if (classList.some((c) => lightIndicators.some((l) => c.includes(l)))) {
+        return "light";
       }
 
-      // Method 2: Check page background color as fallback
-      const bgColor = window.getComputedStyle(document.body).backgroundColor;
-      if (bgColor) {
-        const rgb = bgColor.match(/\d+/g);
+      // Check data attributes
+      const theme =
+        htmlEl.getAttribute("data-theme") ||
+        bodyEl.getAttribute("data-theme") ||
+        htmlEl.getAttribute("data-color-scheme") ||
+        bodyEl.getAttribute("data-color-scheme");
+
+      if (
+        theme &&
+        darkIndicators.some((d) => theme.toLowerCase().includes(d))
+      ) {
+        return "dark";
+      }
+
+      // Method 2: Check prefers-color-scheme
+      const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      if (darkModeQuery.media !== "not all" && darkModeQuery.matches) {
+        return "dark";
+      }
+
+      // Method 3: Check CSS variables for theme indicators
+      const rootStyles = getComputedStyle(htmlEl);
+      const colorScheme =
+        rootStyles.colorScheme || rootStyles.getPropertyValue("color-scheme");
+      if (colorScheme && colorScheme.includes("dark")) {
+        return "dark";
+      }
+
+      // Method 4: Check multiple elements for background color
+      const elementsToCheck = [
+        bodyEl,
+        htmlEl,
+        document.querySelector("main"),
+        document.querySelector('[role="main"]'),
+        document.querySelector("#root"),
+        document.querySelector("#app"),
+        document.querySelector(".page"),
+        document.querySelector(".container"),
+      ].filter(Boolean);
+
+      for (const el of elementsToCheck) {
+        const bgColor = window.getComputedStyle(el).backgroundColor;
+
+        if (
+          bgColor &&
+          bgColor !== "rgba(0, 0, 0, 0)" &&
+          bgColor !== "transparent"
+        ) {
+          const rgb = bgColor.match(/\d+/g);
+          if (rgb && rgb.length >= 3) {
+            const r = parseInt(rgb[0]);
+            const g = parseInt(rgb[1]);
+            const b = parseInt(rgb[2]);
+            const a = rgb.length === 4 ? parseFloat(rgb[3]) : 1;
+
+            // Skip if transparent
+            if (a < 0.1) continue;
+
+            // Calculate relative luminance (more accurate than simple brightness)
+            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+
+            if (luminance < 128) {
+              return "dark";
+            } else if (luminance > 200) {
+              // Only return light if it's clearly light
+              return "light";
+            }
+          }
+        }
+      }
+
+      // Method 5: Check text color (if background detection fails)
+      const textColor = window.getComputedStyle(bodyEl).color;
+      if (textColor) {
+        const rgb = textColor.match(/\d+/g);
         if (rgb && rgb.length >= 3) {
-          const brightness =
-            (parseInt(rgb[0]) * 299 +
-              parseInt(rgb[1]) * 587 +
-              parseInt(rgb[2]) * 114) /
-            1000;
-          if (brightness < 128) return "dark";
+          const luminance =
+            parseInt(rgb[0]) * 0.299 +
+            parseInt(rgb[1]) * 0.587 +
+            parseInt(rgb[2]) * 0.114;
+          // Light text = dark background
+          if (luminance > 128) {
+            return "dark";
+          }
         }
       }
 
@@ -426,6 +539,24 @@
     });
   }
 
+  // Get unique identifier for this search
+  function getSearchIdentifier(engine) {
+    // Engines without URL params - use search input value
+    if (engine.usesUrlParams === false) {
+      const searchInput =
+        document.querySelector('input[name="query"]') ||
+        document.querySelector('input[name="q"]') ||
+        document.querySelector('input[type="search"]');
+
+      if (searchInput && searchInput.value) {
+        return `${window.location.pathname}::${searchInput.value.trim()}`;
+      }
+    }
+
+    // Standard engines - use full URL (includes query params)
+    return window.location.href;
+  }
+
   // Make attemptRedirect async
   async function attemptRedirect() {
     const searchEngine = detectSearchEngine();
@@ -444,11 +575,12 @@
       return;
     }
 
-    if (sessionStorage.getItem("SearchProcessed") === window.location.href) {
+    const searchIdentifier = getSearchIdentifier(engine);
+    if (sessionStorage.getItem("SearchProcessed") === searchIdentifier) {
       return;
     }
 
-    sessionStorage.setItem("SearchProcessed", window.location.href);
+    sessionStorage.setItem("SearchProcessed", searchIdentifier);
 
     // Wait for results to actually load (polls until found)
     console.log(`Waiting for ${engine.name} results...`);
@@ -475,12 +607,12 @@
       });
 
       showRedirectNotification(resultUrl, config.resultIndex, 1000);
-
       redirectTimeout = setTimeout(() => {
         if (!redirectCancelled) {
           console.log("→ Redirecting now...");
           window.location.href = resultUrl;
           chrome.runtime.sendMessage({ action: "redirectComplete" });
+          sessionStorage.removeItem("SearchProcessed"); // Clear so new searches work
         }
       }, 1000);
     } else {
@@ -489,6 +621,7 @@
       chrome.runtime.sendMessage({ action: "redirectFailed" });
     }
   }
+
   // Listen for cancel message from background (page action click)
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "cancelRedirect") {

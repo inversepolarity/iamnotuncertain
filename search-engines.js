@@ -102,15 +102,21 @@ const SEARCH_ENGINES = {
   startpage: {
     name: "Startpage",
     domains: ["startpage.com", "www.startpage.com"],
-    searchPath: "/search",
+    searchPath: "/sp/search",
     queryParam: "query",
+    usesUrlParams: false, // 👈
     selectors: [
-      '.w-gl__result-url[href^="http"]',
-      'a.w-gl__result-title[href^="http"]',
+      'a[data-testid="gl-title-link"][href^="http"]',
+      'a.result-link[href^="http"]',
+      '.result a.result-title[href^="http"]',
     ],
-    excludePatterns: ["startpage.com"],
+    excludePatterns: [
+      "startpage.com",
+      "eu2-browse.startpage.com",
+      "eu-browse.startpage.com",
+      "us-browse.startpage.com",
+    ],
   },
-
   qwant: {
     name: "Qwant",
     domains: ["qwant.com", "www.qwant.com"],
