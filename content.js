@@ -98,10 +98,13 @@
 
     // Detect browser theme with multiple fallbacks
     function detectTheme() {
-      // Method 1: Check for common dark mode classes/attributes on html or body
+      let darkScore = 0;
+      let lightScore = 0;
+
       const htmlEl = document.documentElement;
       const bodyEl = document.body;
 
+      // === METHOD 1: Check classList ===
       const darkIndicators = [
         "dark",
         "dark-mode",
@@ -110,6 +113,7 @@
         "night",
         "night-mode",
         "black-theme",
+        "dim",
       ];
 
       const lightIndicators = [
@@ -118,50 +122,104 @@
         "light-theme",
         "theme-light",
         "day",
+        "day-mode",
+        "white-theme",
+        "bright",
       ];
 
-      // Check classList
       const classList = [
         ...Array.from(htmlEl.classList),
         ...Array.from(bodyEl.classList),
       ].map((c) => c.toLowerCase());
 
       if (classList.some((c) => darkIndicators.some((d) => c.includes(d)))) {
-        return "dark";
+        darkScore += 3;
       }
       if (classList.some((c) => lightIndicators.some((l) => c.includes(l)))) {
-        return "light";
+        lightScore += 3;
       }
 
-      // Check data attributes
-      const theme =
-        htmlEl.getAttribute("data-theme") ||
-        bodyEl.getAttribute("data-theme") ||
-        htmlEl.getAttribute("data-color-scheme") ||
-        bodyEl.getAttribute("data-color-scheme");
+      // === METHOD 2: Check data attributes ===
+      const dataAttrs = [
+        htmlEl.getAttribute("data-theme"),
+        bodyEl.getAttribute("data-theme"),
+        htmlEl.getAttribute("data-color-scheme"),
+        bodyEl.getAttribute("data-color-scheme"),
+        htmlEl.getAttribute("data-color-mode"),
+        bodyEl.getAttribute("data-color-mode"),
+        htmlEl.getAttribute("theme"),
+        bodyEl.getAttribute("theme"),
+      ]
+        .filter(Boolean)
+        .map((v) => v.toLowerCase());
 
       if (
-        theme &&
-        darkIndicators.some((d) => theme.toLowerCase().includes(d))
+        dataAttrs.some((attr) => darkIndicators.some((d) => attr.includes(d)))
       ) {
-        return "dark";
+        darkScore += 3;
+      }
+      if (
+        dataAttrs.some((attr) => lightIndicators.some((l) => attr.includes(l)))
+      ) {
+        lightScore += 3;
       }
 
-      // Method 2: Check prefers-color-scheme
+      // === METHOD 3: Check meta tags ===
+      const metaTheme = document.querySelector('meta[name="color-scheme"]');
+      if (metaTheme) {
+        const content = metaTheme.getAttribute("content")?.toLowerCase();
+        if (content?.includes("dark")) darkScore += 2;
+        if (content?.includes("light")) lightScore += 2;
+      }
+
+      // === METHOD 4: Check prefers-color-scheme (SAVE FOR LATER USE) ===
       const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const lightModeQuery = window.matchMedia("(prefers-color-scheme: light)");
+
       if (darkModeQuery.media !== "not all" && darkModeQuery.matches) {
-        return "dark";
+        darkScore += 2;
+      }
+      if (lightModeQuery.media !== "not all" && lightModeQuery.matches) {
+        lightScore += 2;
       }
 
-      // Method 3: Check CSS variables for theme indicators
+      // === METHOD 5: Check CSS custom properties ===
       const rootStyles = getComputedStyle(htmlEl);
+      const bodyStyles = getComputedStyle(bodyEl);
+
       const colorScheme =
-        rootStyles.colorScheme || rootStyles.getPropertyValue("color-scheme");
-      if (colorScheme && colorScheme.includes("dark")) {
-        return "dark";
+        rootStyles.colorScheme ||
+        rootStyles.getPropertyValue("color-scheme") ||
+        bodyStyles.colorScheme ||
+        bodyStyles.getPropertyValue("color-scheme");
+
+      if (colorScheme?.includes("dark")) darkScore += 2;
+      if (colorScheme?.includes("light")) lightScore += 2;
+
+      const cssVarsToCheck = [
+        "--theme",
+        "--color-scheme",
+        "--mode",
+        "--bg-color",
+        "--background",
+        "--background-color",
+        "--page-bg",
+        "--body-bg",
+        "--main-bg",
+        "--theme-mode",
+      ];
+
+      for (const varName of cssVarsToCheck) {
+        const value =
+          rootStyles.getPropertyValue(varName)?.toLowerCase() ||
+          bodyStyles.getPropertyValue(varName)?.toLowerCase();
+        if (value) {
+          if (darkIndicators.some((d) => value.includes(d))) darkScore += 1;
+          if (lightIndicators.some((l) => value.includes(l))) lightScore += 1;
+        }
       }
 
-      // Method 4: Check multiple elements for background color
+      // === METHOD 6: Sample multiple background colors ===
       const elementsToCheck = [
         bodyEl,
         htmlEl,
@@ -171,7 +229,19 @@
         document.querySelector("#app"),
         document.querySelector(".page"),
         document.querySelector(".container"),
+        document.querySelector("header"),
+        document.querySelector("nav"),
+        document.querySelector(".search-result"),
+        document.querySelector(".result"),
+        document.querySelector("article"),
+        // Kagi-specific
+        document.querySelector(".__srgi"),
+        document.querySelector(".search-result-page"),
+        document.querySelector(".search-container"),
       ].filter(Boolean);
+
+      let darkBgCount = 0;
+      let lightBgCount = 0;
 
       for (const el of elementsToCheck) {
         const bgColor = window.getComputedStyle(el).backgroundColor;
@@ -188,23 +258,23 @@
             const b = parseInt(rgb[2]);
             const a = rgb.length === 4 ? parseFloat(rgb[3]) : 1;
 
-            // Skip if transparent
-            if (a < 0.1) continue;
+            if (a < 0.5) continue;
 
-            // Calculate relative luminance (more accurate than simple brightness)
             const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
 
-            if (luminance < 128) {
-              return "dark";
-            } else if (luminance > 200) {
-              // Only return light if it's clearly light
-              return "light";
+            if (luminance < 100) {
+              darkBgCount++;
+            } else if (luminance > 180) {
+              lightBgCount++;
             }
           }
         }
       }
 
-      // Method 5: Check text color (if background detection fails)
+      if (darkBgCount > lightBgCount) darkScore += darkBgCount;
+      if (lightBgCount > darkBgCount) lightScore += lightBgCount;
+
+      // === METHOD 7: Check text color ===
       const textColor = window.getComputedStyle(bodyEl).color;
       if (textColor) {
         const rgb = textColor.match(/\d+/g);
@@ -213,15 +283,70 @@
             parseInt(rgb[0]) * 0.299 +
             parseInt(rgb[1]) * 0.587 +
             parseInt(rgb[2]) * 0.114;
-          // Light text = dark background
-          if (luminance > 128) {
-            return "dark";
+
+          if (luminance > 180) {
+            darkScore += 2;
+          } else if (luminance < 100) {
+            lightScore += 2;
           }
         }
       }
 
-      // Default to light theme
-      return "light";
+      // === METHOD 8: Check link colors ===
+      const link = document.querySelector("a");
+      if (link) {
+        const linkColor = window.getComputedStyle(link).color;
+        if (linkColor) {
+          const rgb = linkColor.match(/\d+/g);
+          if (rgb && rgb.length >= 3) {
+            const luminance =
+              parseInt(rgb[0]) * 0.299 +
+              parseInt(rgb[1]) * 0.587 +
+              parseInt(rgb[2]) * 0.114;
+
+            if (luminance > 150) darkScore += 1;
+            if (luminance < 120) lightScore += 1;
+          }
+        }
+      }
+
+      // === METHOD 9: Site-specific overrides ===
+      const hostname = window.location.hostname;
+
+      if (hostname.includes("kagi.com")) {
+        const kagiContainer = document.querySelector(".__srgi");
+
+        if (kagiContainer) {
+          const containerBg = getComputedStyle(kagiContainer).backgroundColor;
+          const rgb = containerBg.match(/\d+/g);
+          if (rgb && rgb.length >= 3) {
+            const luminance =
+              0.299 * parseInt(rgb[0]) +
+              0.587 * parseInt(rgb[1]) +
+              0.114 * parseInt(rgb[2]);
+            if (luminance < 128) darkScore += 3;
+            else lightScore += 3;
+          }
+        }
+      }
+
+      // === DECISION ===
+      console.log("🎨 Theme detection scores:", {
+        dark: darkScore,
+        light: lightScore,
+        site: hostname,
+      });
+
+      // If scores are equal or very close, fall back to prefers-color-scheme
+      if (Math.abs(darkScore - lightScore) <= 1) {
+        const result = darkModeQuery.matches ? "dark" : "light";
+        console.log("📊 Scores too close, using prefers-color-scheme:", result);
+        return result;
+      }
+
+      const result = darkScore > lightScore ? "dark" : "light";
+      console.log("📊 Final theme based on scores:", result);
+      return result;
     }
 
     const theme = detectTheme();
