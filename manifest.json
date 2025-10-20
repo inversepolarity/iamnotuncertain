@@ -1,29 +1,27 @@
 {
   "manifest_version": 3,
   "name": "i am not uncertain",
-  "version": "1.0.3",
+  "version": "1.0.31",
   "description": "omnibar search → nth result. press escape to cancel.",
-  
   "browser_specific_settings": {
     "gecko": {
       "id": "info@evenzero.in",
       "strict_min_version": "109.0",
       "data_collection_permissions": {
-        "required": ["none"]
+        "required": [
+          "none"
+        ]
       }
     }
   },
-  
   "developer": {
     "name": "evenzero",
     "url": "https://evenzero.in"
   },
-
   "permissions": [
     "storage",
     "activeTab"
   ],
-  
   "host_permissions": [
     "*://*.google.com/*",
     "*://*.bing.com/*",
@@ -39,11 +37,12 @@
     "*://*.searx.be/*",
     "*://*.mojeek.com/*"
   ],
-  
   "background": {
-    "scripts": ["background.js"]
+    "scripts": [
+      "background.js"
+    ],
+    "type": "module"
   },
-  
   "content_scripts": [
     {
       "matches": [
@@ -61,14 +60,18 @@
         "*://*.searx.be/search*",
         "*://*.mojeek.com/search*"
       ],
-      "js": ["search-engines.js", "content.js"],
+      "js": [
+        "search-engines.js",
+        "content.js"
+      ],
       "run_at": "document_end"
     }
   ],
-  
   "web_accessible_resources": [
     {
-      "resources": ["icons/redirecting32.png"],
+      "resources": [
+        "icons/redirecting32.png"
+      ],
       "matches": [
         "*://*.google.com/*",
         "*://*.bing.com/*",
@@ -86,12 +89,10 @@
       ]
     }
   ],
-  
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true
   },
-  
   "action": {
     "default_icon": {
       "16": "icons/icon16_active.png",
@@ -100,7 +101,6 @@
     },
     "default_title": "i am not uncertain"
   },
-  
   "page_action": {
     "default_icon": {
       "16": "icons/redirecting16.png",
@@ -123,7 +123,6 @@
       "*://*.mojeek.com/search*"
     ]
   },
-  
   "icons": {
     "16": "icons/icon16_active.png",
     "32": "icons/icon32_active.png",
