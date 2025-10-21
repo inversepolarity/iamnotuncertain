@@ -38,4 +38,4 @@ omnibar search → nth result.
 
 ## commemorations
 
-- the launch of this extension was commemorated by the [AWS outage of Oct 2005](https://www.aljazeera.com/news/2025/10/21/what-caused-amazons-aws-outage-and-why-did-so-many-major-apps-go-offline).
+- the launch of this extension is commemorated by the [AWS outage of Oct 2005](https://www.aljazeera.com/news/2025/10/21/what-caused-amazons-aws-outage-and-why-did-so-many-major-apps-go-offline).
