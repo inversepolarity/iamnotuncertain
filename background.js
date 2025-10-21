@@ -250,3 +250,48 @@ browserAPI.runtime.onInstalled.addListener(() => {
     updateIcon(isEnabled);
   });
 });
+
+// context menu
+// Create context menu on install/startup
+function createContextMenu() {
+  browserAPI.contextMenus.removeAll(() => {
+    browserAPI.contextMenus.create({
+      id: "open-options",
+      title: "Options...",
+      contexts: ["action"], // Chrome/Brave
+    });
+
+    // Firefox uses "browser_action" instead of "action" in MV3
+    if (isFirefox) {
+      browserAPI.contextMenus.create({
+        id: "open-options-firefox",
+        title: "Options...",
+        contexts: ["browser_action"],
+      });
+    }
+  });
+}
+
+// Handle context menu clicks
+browserAPI.contextMenus.onClicked.addListener((info, tab) => {
+  if (
+    info.menuItemId === "open-options" ||
+    info.menuItemId === "open-options-firefox"
+  ) {
+    browserAPI.runtime.openOptionsPage();
+  }
+});
+
+// Create menu on install
+browserAPI.runtime.onInstalled.addListener(() => {
+  createContextMenu();
+
+  // ... your existing onInstalled code ...
+  browserAPI.storage.sync.get(["enabled"], (result) => {
+    isEnabled = result.enabled !== false;
+    updateIcon(isEnabled);
+  });
+});
+
+// Recreate menu on startup (in case it was cleared)
+createContextMenu();

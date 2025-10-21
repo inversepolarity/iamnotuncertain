@@ -11,14 +11,23 @@ const SEARCH_ENGINES = {
       'div#search a[href^="http"]:not([href*="google.com/search"])',
     ],
     excludePatterns: [
-      "google.com",
-      "youtube.com",
+      "google.com/search",
+      "google.com/imgres",
+      "webcache.googleusercontent.com",
+      "translate.google",
       "maps.google",
       "accounts.google",
       "support.google",
       "policies.google",
+      // Remove generic "youtube.com" - handled specially in code
+    ],
+    skipContainers: [
+      "#rhs", // Right sidebar
+      ".xpdopen", // Featured snippets
+      ".kp-wholepage", // Knowledge panels
     ],
   },
+
   bing: {
     name: "Bing",
     domains: ["bing.com", "www.bing.com"],
@@ -38,6 +47,7 @@ const SEARCH_ENGINES = {
       "microsofttranslator.com",
       // Don't exclude all bing.com URLs!
     ],
+    skipContainers: [],
   },
 
   duckduckgo: {
@@ -46,11 +56,26 @@ const SEARCH_ENGINES = {
     searchPath: "/",
     queryParam: "q",
     selectors: [
+      // Target organic results only - NEW selector
+      'li[data-layout="organic"] a[data-testid="result-title-a"][href^="http"]',
+      // Fallback selectors
       'article[data-testid="result"] h2 a[href^="http"]',
-      '.results--main .result__a[href^="http"]',
       'a.result__a[href^="http"]',
     ],
-    excludePatterns: ["duckduckgo.com"],
+    excludePatterns: [
+      "duckduckgo.com/y.js",
+      "duckduckgo.com/?",
+      "r.duckduckgo.com",
+    ],
+    skipContainers: [
+      // Skip modules (about, videos, news, etc.)
+      'li[data-layout="videos"]',
+      'li[data-layout="news"]',
+      'li[data-layout="images"]',
+      '.react-module[data-react-module-id="about"]',
+      '.react-module[data-react-module-id="videos"]',
+      '.react-module[data-react-module-id="news"]',
+    ],
   },
 
   kagi: {
@@ -64,6 +89,7 @@ const SEARCH_ENGINES = {
       'div.search-result a[href^="http"]',
     ],
     excludePatterns: ["kagi.com"],
+    skipContainers: [],
   },
 
   brave: {
@@ -76,6 +102,7 @@ const SEARCH_ENGINES = {
       'div.snippet .h[href^="http"]',
     ],
     excludePatterns: ["brave.com"],
+    skipContainers: [],
   },
 
   yahoo: {
@@ -88,6 +115,7 @@ const SEARCH_ENGINES = {
       '.searchCenterMiddle .compTitle a[href^="http"]',
     ],
     excludePatterns: ["yahoo.com/search", "r.search.yahoo.com"],
+    skipContainers: [],
   },
 
   ecosia: {
@@ -97,6 +125,7 @@ const SEARCH_ENGINES = {
     queryParam: "q",
     selectors: ['.result__link[href^="http"]', 'a.result-url[href^="http"]'],
     excludePatterns: ["ecosia.org"],
+    skipContainers: [],
   },
 
   startpage: {
@@ -116,7 +145,9 @@ const SEARCH_ENGINES = {
       "eu-browse.startpage.com",
       "us-browse.startpage.com",
     ],
+    skipContainers: [],
   },
+
   qwant: {
     name: "Qwant",
     domains: ["qwant.com", "www.qwant.com"],
@@ -134,6 +165,7 @@ const SEARCH_ENGINES = {
       "about.qwant.com",
       // Don't exclude all qwant.com URLs!
     ],
+    skipContainers: [],
   },
 
   yandex: {
@@ -146,6 +178,7 @@ const SEARCH_ENGINES = {
       'li.serp-item a[href^="http"]',
     ],
     excludePatterns: ["yandex.com", "yandex.ru"],
+    skipContainers: [],
   },
 
   mojeek: {
@@ -155,6 +188,7 @@ const SEARCH_ENGINES = {
     queryParam: "q",
     selectors: ['a.ob[href^="http"]', '.results-standard a[href^="http"]'],
     excludePatterns: ["mojeek.com"],
+    skipContainers: [],
   },
 };
 

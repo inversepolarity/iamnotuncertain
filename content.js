@@ -27,7 +27,25 @@
     return null;
   }
 
-  // Check if current URL has a search query
+  // Sanitize search query - remove control characters, normalize UTF-8
+  function sanitizeSearchQuery(query) {
+    if (!query || typeof query !== "string") return "";
+
+    return (
+      query
+        // Normalize Unicode to NFC (canonical form)
+        .normalize("NFC")
+        // Remove null bytes
+        .replace(/\0/g, "")
+        // Remove other control characters (except newline, tab, carriage return)
+        .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F-\x9F]/g, "")
+        // Remove zero-width characters and other invisible Unicode
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        // Trim whitespace
+        .trim()
+    );
+  }
+
   // Check if current URL has a search query
   function hasSearchQuery(engine) {
     // Engines that don't use URL params - check search input instead
@@ -36,47 +54,192 @@
         document.querySelector('input[name="query"]') ||
         document.querySelector('input[name="q"]') ||
         document.querySelector('input[type="search"]');
-      return searchInput && searchInput.value.trim() !== "";
+
+      if (!searchInput) return false;
+
+      const sanitized = sanitizeSearchQuery(searchInput.value);
+      return sanitized !== "";
     }
 
     // Standard URL param check for most engines
     const params = new URLSearchParams(window.location.search);
-    return (
-      params.has(engine.queryParam) &&
-      params.get(engine.queryParam).trim() !== ""
-    );
+
+    if (!params.has(engine.queryParam)) return false;
+
+    const rawQuery = params.get(engine.queryParam);
+    const sanitized = sanitizeSearchQuery(rawQuery);
+
+    return sanitized !== "";
   }
 
   // Extract Nth search result
   function extractNthResult(engine, n) {
     for (const selector of engine.selectors) {
       try {
+        let allResults = [];
+
+        // STEP 1: Get regular link results
         const links = Array.from(document.querySelectorAll(selector));
+        console.log(`Found ${links.length} links with selector: ${selector}`);
 
-        // Filter out excluded patterns
-        const validLinks = links.filter((link) => {
+        for (const link of links) {
           const href = link.href;
-          if (!href || href === window.location.href) return false;
+          if (!href || href === window.location.href) continue;
 
-          return !engine.excludePatterns.some((pattern) =>
-            href.toLowerCase().includes(pattern.toLowerCase())
-          );
-        });
+          // Find the result container - ENGINE SPECIFIC
+          let resultWrapper = null;
 
-        // Remove duplicates
-        const uniqueLinks = [];
-        const seenUrls = new Set();
+          if (engine.name === "Google") {
+            resultWrapper = link.closest(".MjjYud, div.g, div[data-hveid]");
+          } else if (engine.name === "DuckDuckGo") {
+            resultWrapper = link.closest(
+              'li[data-layout="organic"], article[data-testid="result"]'
+            );
+          } else {
+            // Generic fallback - find any parent container
+            resultWrapper = link.closest("article, li, div.result, div.g");
+          }
 
-        for (const link of validLinks) {
-          const url = link.href;
-          if (!seenUrls.has(url)) {
-            seenUrls.add(url);
-            uniqueLinks.push(link);
+          if (resultWrapper) {
+            allResults.push({
+              href: href,
+              element: link,
+              type: "link",
+              container: resultWrapper,
+            });
+          } else {
+            console.log(`⚠ No container found for:`, href.substring(0, 60));
           }
         }
 
-        if (uniqueLinks.length >= n) {
-          return uniqueLinks[n - 1].href;
+        // STEP 2: For Google - also handle embedded videos
+        if (engine.name === "Google") {
+          const videoContainers = document.querySelectorAll(
+            "[data-curl], [data-surl]"
+          );
+
+          for (const container of videoContainers) {
+            if (container.closest("#rhs, .rhs")) continue;
+
+            const url =
+              container.getAttribute("data-curl") ||
+              container.getAttribute("data-surl");
+
+            if (url && url.startsWith("http")) {
+              const resultWrapper = container.closest(".MjjYud, div.g");
+              if (resultWrapper) {
+                allResults.push({
+                  href: url,
+                  element: container,
+                  type: "video",
+                  container: resultWrapper,
+                });
+              }
+            }
+          }
+        }
+
+        console.log(`Total results before filtering: ${allResults.length}`);
+
+        // STEP 3: Sort by DOM position
+        allResults.sort((a, b) => {
+          const posA = a.container.compareDocumentPosition(b.container);
+          if (posA & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+          if (posA & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+          return 0;
+        });
+
+        // STEP 4: Filter and deduplicate
+        const validResults = [];
+        const seenUrls = new Set();
+        const seenContainers = new Set();
+
+        for (const result of allResults) {
+          const href = result.href;
+
+          // Skip if we already counted this container
+          if (seenContainers.has(result.container)) {
+            console.log(`⊘ Duplicate container:`, href.substring(0, 60));
+            continue;
+          }
+
+          // Skip if URL already seen
+          if (seenUrls.has(href)) {
+            console.log(`⊘ Duplicate URL:`, href.substring(0, 60));
+            continue;
+          }
+
+          // Skip modules for DDG
+          if (engine.name === "DuckDuckGo") {
+            const parentLi = result.container.closest("li");
+            if (parentLi) {
+              const layout = parentLi.getAttribute("data-layout");
+              if (layout && layout !== "organic") {
+                console.log(
+                  `⊘ Skipped DDG module (${layout}):`,
+                  href.substring(0, 60)
+                );
+                continue;
+              }
+            }
+          }
+
+          // Check exclude patterns
+          let shouldExclude = false;
+          for (const pattern of engine.excludePatterns) {
+            const patternLower = pattern.toLowerCase();
+            const hrefLower = href.toLowerCase();
+
+            // Special handling for youtube.com
+            if (patternLower === "youtube.com") {
+              if (
+                hrefLower.includes("youtube.com/user/google") ||
+                hrefLower.includes("youtube.com/google") ||
+                hrefLower.includes("youtube.com/@google")
+              ) {
+                shouldExclude = true;
+                break;
+              }
+              continue;
+            }
+
+            if (hrefLower.includes(patternLower)) {
+              shouldExclude = true;
+              break;
+            }
+          }
+
+          if (shouldExclude) {
+            console.log(`⊘ Excluded:`, href.substring(0, 60));
+            continue;
+          }
+
+          // Google-specific: Skip if in right sidebar
+          if (engine.name === "Google") {
+            if (result.container.closest("#rhs, .rhs, #rhs_block")) {
+              console.log(`⊘ Skipped (sidebar):`, href.substring(0, 60));
+              continue;
+            }
+          }
+
+          // Valid result!
+          seenUrls.add(href);
+          seenContainers.add(result.container);
+          validResults.push(result);
+
+          console.log(
+            `✓ Result #${validResults.length}:`,
+            href.substring(0, 60)
+          );
+
+          if (validResults.length >= n) break;
+        }
+
+        if (validResults.length >= n) {
+          console.log(`Returning result #${n}:`, validResults[n - 1].href);
+          return validResults[n - 1].href;
+        } else {
+          console.log(`⚠ Only found ${validResults.length} results, need ${n}`);
         }
       } catch (e) {
         console.error("Error with selector:", selector, e);
@@ -331,7 +494,7 @@
       }
 
       // === DECISION ===
-      console.log("🎨 Theme detection scores:", {
+      console.log("Theme detection scores:", {
         dark: darkScore,
         light: lightScore,
         site: hostname,
@@ -340,12 +503,12 @@
       // If scores are equal or very close, fall back to prefers-color-scheme
       if (Math.abs(darkScore - lightScore) <= 1) {
         const result = darkModeQuery.matches ? "dark" : "light";
-        console.log("📊 Scores too close, using prefers-color-scheme:", result);
+        console.log("Scores too close, using prefers-color-scheme:", result);
         return result;
       }
 
       const result = darkScore > lightScore ? "dark" : "light";
-      console.log("📊 Final theme based on scores:", result);
+      console.log("Final theme based on scores:", result);
       return result;
     }
 
@@ -674,14 +837,16 @@
         document.querySelector('input[type="search"]');
 
       if (searchInput && searchInput.value) {
-        return `${window.location.pathname}::${searchInput.value.trim()}`;
+        const sanitized = sanitizeSearchQuery(searchInput.value);
+        if (sanitized) {
+          return `${window.location.pathname}::${sanitized}`;
+        }
       }
     }
 
     // Standard engines - use full URL (includes query params)
     return window.location.href;
   }
-
   // Make attemptRedirect async
   async function attemptRedirect() {
     const searchEngine = detectSearchEngine();
@@ -723,8 +888,6 @@
     const resultUrl = extractNthResult(engine, config.resultIndex);
 
     if (resultUrl) {
-      console.log(`✓ Found result #${config.resultIndex}:`, resultUrl);
-
       chrome.runtime.sendMessage({
         action: "redirecting",
         index: config.resultIndex,
