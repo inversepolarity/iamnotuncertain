@@ -73,7 +73,6 @@
   }
 
   // Extract Nth search result
-  // Extract Nth search result - IN VISUAL ORDER
   function extractNthResult(engine, n) {
     for (const selector of engine.selectors) {
       try {
@@ -88,6 +87,7 @@
           if (!href || href === window.location.href) continue;
 
           // Find container
+          // Find container
           let container = null;
           if (engine.name === "Google") {
             container = link.closest(".MjjYud, div.g, div[data-hveid]");
@@ -95,10 +95,15 @@
             container = link.closest(
               'li[data-layout="organic"], article[data-testid="result"]'
             );
+          } else if (engine.name === "Brave Search") {
+            container = link.closest(
+              '.snippet, .fdb, article, div[class*="result"]'
+            );
+          } else if (engine.name === "Kagi") {
+            container = link.closest("._0_SRI, .search-result");
           } else {
             container = link.closest("article, li, div.result, div.g");
           }
-
           if (!container) continue;
 
           // Get visual position (distance from top of page)

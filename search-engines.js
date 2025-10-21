@@ -84,9 +84,9 @@ const SEARCH_ENGINES = {
     searchPath: "/search",
     queryParam: "q",
     selectors: [
-      '.__sri-url a[href^="http"]',
-      '.sri-url a[href^="http"]',
-      'div.search-result a[href^="http"]',
+      'a.__sri_title_link[href^="http"]',
+      'a._0_sri_title_link[href^="http"]',
+      '._0_SRI a[href^="http"]',
     ],
     excludePatterns: ["kagi.com"],
     skipContainers: [],
@@ -98,10 +98,13 @@ const SEARCH_ENGINES = {
     searchPath: "/search",
     queryParam: "q",
     selectors: [
+      'div.snippet a[href^="http"]',
       '.snippet[data-type="web"] a[href^="http"]',
       'div.snippet .h[href^="http"]',
+      '.fdb a[href^="http"]',
+      'article a[href^="http"]',
     ],
-    excludePatterns: ["brave.com"],
+    excludePatterns: ["search.brave.com", "brave.com/search"],
     skipContainers: [],
   },
 
