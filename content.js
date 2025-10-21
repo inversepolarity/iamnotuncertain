@@ -73,112 +73,71 @@
   }
 
   // Extract Nth search result
+  // Extract Nth search result - IN VISUAL ORDER
   function extractNthResult(engine, n) {
     for (const selector of engine.selectors) {
       try {
-        let allResults = [];
-
-        // STEP 1: Get regular link results
         const links = Array.from(document.querySelectorAll(selector));
         console.log(`Found ${links.length} links with selector: ${selector}`);
+
+        // Collect results with their visual position
+        const results = [];
 
         for (const link of links) {
           const href = link.href;
           if (!href || href === window.location.href) continue;
 
-          // Find the result container - ENGINE SPECIFIC
-          let resultWrapper = null;
-
+          // Find container
+          let container = null;
           if (engine.name === "Google") {
-            resultWrapper = link.closest(".MjjYud, div.g, div[data-hveid]");
+            container = link.closest(".MjjYud, div.g, div[data-hveid]");
           } else if (engine.name === "DuckDuckGo") {
-            resultWrapper = link.closest(
+            container = link.closest(
               'li[data-layout="organic"], article[data-testid="result"]'
             );
           } else {
-            // Generic fallback - find any parent container
-            resultWrapper = link.closest("article, li, div.result, div.g");
+            container = link.closest("article, li, div.result, div.g");
           }
 
-          if (resultWrapper) {
-            allResults.push({
-              href: href,
-              element: link,
-              type: "link",
-              container: resultWrapper,
-            });
-          } else {
-            console.log(`⚠ No container found for:`, href.substring(0, 60));
-          }
+          if (!container) continue;
+
+          // Get visual position (distance from top of page)
+          const rect = container.getBoundingClientRect();
+          const visualY = rect.top + window.scrollY;
+
+          results.push({
+            href: href,
+            container: container,
+            visualY: visualY,
+          });
         }
 
-        // STEP 2: For Google - also handle embedded videos
-        if (engine.name === "Google") {
-          const videoContainers = document.querySelectorAll(
-            "[data-curl], [data-surl]"
-          );
+        // Sort by visual position (top to bottom)
+        results.sort((a, b) => a.visualY - b.visualY);
 
-          for (const container of videoContainers) {
-            if (container.closest("#rhs, .rhs")) continue;
+        console.log(`Total results before filtering: ${results.length}`);
 
-            const url =
-              container.getAttribute("data-curl") ||
-              container.getAttribute("data-surl");
-
-            if (url && url.startsWith("http")) {
-              const resultWrapper = container.closest(".MjjYud, div.g");
-              if (resultWrapper) {
-                allResults.push({
-                  href: url,
-                  element: container,
-                  type: "video",
-                  container: resultWrapper,
-                });
-              }
-            }
-          }
-        }
-
-        console.log(`Total results before filtering: ${allResults.length}`);
-
-        // STEP 3: Sort by DOM position
-        allResults.sort((a, b) => {
-          const posA = a.container.compareDocumentPosition(b.container);
-          if (posA & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
-          if (posA & Node.DOCUMENT_POSITION_PRECEDING) return 1;
-          return 0;
-        });
-
-        // STEP 4: Filter and deduplicate
+        // Filter and deduplicate
         const validResults = [];
         const seenUrls = new Set();
         const seenContainers = new Set();
 
-        for (const result of allResults) {
+        for (const result of results) {
           const href = result.href;
 
-          // Skip if we already counted this container
-          if (seenContainers.has(result.container)) {
-            console.log(`⊘ Duplicate container:`, href.substring(0, 60));
-            continue;
-          }
+          // Deduplicate by container
+          if (seenContainers.has(result.container)) continue;
 
-          // Skip if URL already seen
-          if (seenUrls.has(href)) {
-            console.log(`⊘ Duplicate URL:`, href.substring(0, 60));
-            continue;
-          }
+          // Deduplicate by URL
+          if (seenUrls.has(href)) continue;
 
-          // Skip modules for DDG
+          // Skip DDG modules
           if (engine.name === "DuckDuckGo") {
             const parentLi = result.container.closest("li");
             if (parentLi) {
               const layout = parentLi.getAttribute("data-layout");
               if (layout && layout !== "organic") {
-                console.log(
-                  `⊘ Skipped DDG module (${layout}):`,
-                  href.substring(0, 60)
-                );
+                console.log(`⊘ Skipped DDG module (${layout})`);
                 continue;
               }
             }
@@ -187,23 +146,7 @@
           // Check exclude patterns
           let shouldExclude = false;
           for (const pattern of engine.excludePatterns) {
-            const patternLower = pattern.toLowerCase();
-            const hrefLower = href.toLowerCase();
-
-            // Special handling for youtube.com
-            if (patternLower === "youtube.com") {
-              if (
-                hrefLower.includes("youtube.com/user/google") ||
-                hrefLower.includes("youtube.com/google") ||
-                hrefLower.includes("youtube.com/@google")
-              ) {
-                shouldExclude = true;
-                break;
-              }
-              continue;
-            }
-
-            if (hrefLower.includes(patternLower)) {
+            if (href.toLowerCase().includes(pattern.toLowerCase())) {
               shouldExclude = true;
               break;
             }
@@ -214,10 +157,10 @@
             continue;
           }
 
-          // Google-specific: Skip if in right sidebar
+          // Google: Skip right sidebar
           if (engine.name === "Google") {
             if (result.container.closest("#rhs, .rhs, #rhs_block")) {
-              console.log(`⊘ Skipped (sidebar):`, href.substring(0, 60));
+              console.log(`⊘ Skipped (sidebar)`);
               continue;
             }
           }
@@ -236,10 +179,11 @@
         }
 
         if (validResults.length >= n) {
-          console.log(`Returning result #${n}:`, validResults[n - 1].href);
+          console.log(
+            `✅ Returning visually #${n} result:`,
+            validResults[n - 1].href
+          );
           return validResults[n - 1].href;
-        } else {
-          console.log(`⚠ Only found ${validResults.length} results, need ${n}`);
         }
       } catch (e) {
         console.error("Error with selector:", selector, e);
