@@ -76,8 +76,20 @@
   function extractNthResult(engine, n) {
     for (const selector of engine.selectors) {
       try {
-        const links = Array.from(document.querySelectorAll(selector));
-        console.log(`Found ${links.length} links with selector: ${selector}`);
+        const links = Array.from(document.querySelectorAll(selector)).filter(
+          (link) => {
+            // Skip if link is inside any skipContainer selector
+            for (const skipSel of engine.skipContainers || []) {
+              if (link.closest(skipSel)) return false;
+            }
+            return true;
+          }
+        );
+
+        console.log(
+          `Found ${links.length} links with selector: ${selector}`,
+          links
+        );
 
         // Collect results with their visual position
         const results = [];
@@ -137,7 +149,6 @@
             visualY: visualY,
           });
         }
-        console.log("🚀 ~ extractNthResult ~ results:", results);
 
         // Sort by visual position (top to bottom)
         results.sort((a, b) => a.visualY - b.visualY);
@@ -470,13 +481,6 @@
         light: lightScore,
         site: hostname,
       });
-
-      // If scores are equal or very close, fall back to prefers-color-scheme
-      if (Math.abs(darkScore - lightScore) <= 1) {
-        const result = darkModeQuery.matches ? "dark" : "light";
-        console.log("Scores too close, using prefers-color-scheme:", result);
-        return result;
-      }
 
       const result = darkScore > lightScore ? "dark" : "light";
       console.log("Final theme based on scores:", result);

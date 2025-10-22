@@ -39,15 +39,13 @@ const SEARCH_ENGINES = {
       "main ol#b_results li h2 a",
     ],
     excludePatterns: [
-      // Remove "bing.com" entirely, or be more specific:
-      "bing.com/search", // Keep this
+      "bing.com/search",
       "bing.com/maps",
       "bing.com/videos",
       "microsoft.com/en-us/bing",
       "microsofttranslator.com",
-      // Don't exclude all bing.com URLs!
     ],
-    skipContainers: [],
+    skipContainers: [".b_vtl_deeplinks", ".b_ans"],
   },
 
   duckduckgo: {
