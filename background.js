@@ -17,7 +17,6 @@ const ICON_INACTIVE = {
 const ICON_REDIRECTING = {
   16: "icons/redirecting16.png",
   32: "icons/redirecting32.png",
-  48: "icons/redirecting48.png",
 };
 
 const ICON_CANCELLED = {

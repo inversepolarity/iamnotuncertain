@@ -157,20 +157,20 @@ const SEARCH_ENGINES = {
     searchPath: "/",
     queryParam: "q",
     selectors: [
-      'a[data-testid="serp-link"][href^="http"]',
-      '.external[href^="http"]',
+      // Main organic links inside web results
+      'div[data-testid="webResult"] a.external[href^="http"]',
+      // Video or other media links
+      'div[data-testid="videoCardResult"] a.external[href^="http"]',
     ],
     excludePatterns: [
-      "qwant.com/search", // Specific paths only
+      "qwant.com/search",
       "qwant.com/maps",
       "qwant.com/settings",
       "help.qwant.com",
       "about.qwant.com",
-      // Don't exclude all qwant.com URLs!
     ],
-    skipContainers: [],
+    skipContainers: ['[data-testid="sectionVideos"]'],
   },
-
   yandex: {
     name: "Yandex",
     domains: ["yandex.com", "yandex.ru"],

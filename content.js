@@ -87,23 +87,44 @@
           if (!href || href === window.location.href) continue;
 
           // Find container
-          // Find container
           let container = null;
-          if (engine.name === "Google") {
-            container = link.closest(".MjjYud, div.g, div[data-hveid]");
-          } else if (engine.name === "DuckDuckGo") {
-            container = link.closest(
-              'li[data-layout="organic"], article[data-testid="result"]'
-            );
-          } else if (engine.name === "Brave Search") {
-            container = link.closest(
-              '.snippet, .fdb, article, div[class*="result"]'
-            );
-          } else if (engine.name === "Kagi") {
-            container = link.closest("._0_SRI, .search-result");
-          } else {
-            container = link.closest("article, li, div.result, div.g");
+
+          switch (engine.name) {
+            case "Google":
+              container = link.closest(".MjjYud, div.g, div[data-hveid]");
+              break;
+            case "DuckDuckGo":
+              container = link.closest(
+                'li[data-layout="organic"], article[data-testid="result"]'
+              );
+              break;
+            case "Brave Search":
+              container = link.closest(
+                '.snippet, .fdb, article, div[class*="result"]'
+              );
+              break;
+            case "Kagi":
+              container = link.closest("._0_SRI, .search-result");
+              break;
+            case "Qwant": {
+              let node = link;
+              while (node && node !== document) {
+                if (
+                  node.dataset?.testid === "webResult" ||
+                  node.dataset?.testid === "videoCardResult"
+                ) {
+                  container = node;
+                  break;
+                }
+                node = node.parentNode || node.host;
+              }
+              break;
+            }
+            default:
+              container = link.closest("article, li, div.result, div.g");
+              break;
           }
+
           if (!container) continue;
 
           // Get visual position (distance from top of page)
@@ -116,6 +137,7 @@
             visualY: visualY,
           });
         }
+        console.log("🚀 ~ extractNthResult ~ results:", results);
 
         // Sort by visual position (top to bottom)
         results.sort((a, b) => a.visualY - b.visualY);
@@ -185,7 +207,7 @@
 
         if (validResults.length >= n) {
           console.log(
-            `✅ Returning visually #${n} result:`,
+            `Returning visually #${n} result:`,
             validResults[n - 1].href
           );
           return validResults[n - 1].href;
