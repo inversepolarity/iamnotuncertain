@@ -20,9 +20,9 @@ const ICON_REDIRECTING = {
 };
 
 const ICON_CANCELLED = {
-  16: "icons/cancelled16.png",
-  32: "icons/cancelled32.png",
-  48: "icons/cancelled48.png",
+  16: "icons/icons16_cancelled.png",
+  32: "icons/icons32_cancelled.png",
+  48: "icons/icons48_cancelled.png",
 };
 
 let isEnabled = true;
