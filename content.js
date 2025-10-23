@@ -22,6 +22,14 @@
         if (pathname.includes(engine.searchPath)) {
           return { key, engine };
         }
+
+        if (Array.isArray(engine.searchPath)) {
+          for (const path of engine.searchPath) {
+            if (pathname.includes(path)) {
+              return { key, engine };
+            }
+          }
+        }
       }
     }
     return null;
@@ -767,7 +775,6 @@
     sessionStorage.removeItem("SearchProcessed");
   }
 
-  // Add this waitForResults function before attemptRedirect
   function waitForResults(engine, maxAttempts = 20) {
     return new Promise((resolve) => {
       let attempts = 0;
@@ -822,7 +829,7 @@
     // Standard engines - use full URL (includes query params)
     return window.location.href;
   }
-  // Make attemptRedirect async
+
   async function attemptRedirect() {
     const searchEngine = detectSearchEngine();
 

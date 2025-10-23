@@ -132,7 +132,7 @@ const SEARCH_ENGINES = {
   startpage: {
     name: "Startpage",
     domains: ["startpage.com", "www.startpage.com"],
-    searchPath: "/sp/search",
+    searchPath: ["do/search", "sp/search"],
     queryParam: "query",
     usesUrlParams: false, // 👈
     selectors: [

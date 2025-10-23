@@ -122,6 +122,8 @@ function loadSettings() {
       populateEngines(result.enabledEngines || {});
     }
   );
+  let ver = document.getElementById("version");
+  ver.innerText = "evenzero.in / " + browserAPI.runtime.getManifest().version;
 }
 
 // Listen for changes from other sources (popup/background)

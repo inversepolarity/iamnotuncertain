@@ -253,21 +253,13 @@ browserAPI.runtime.onInstalled.addListener(() => {
 // context menu
 // Create context menu on install/startup
 function createContextMenu() {
+  if (!isFirefox) return; // only create in Firefox
   browserAPI.contextMenus.removeAll(() => {
     browserAPI.contextMenus.create({
       id: "open-options",
       title: "Options...",
       contexts: ["action"], // Chrome/Brave
     });
-
-    // Firefox uses "browser_action" instead of "action" in MV3
-    if (isFirefox) {
-      browserAPI.contextMenus.create({
-        id: "open-options-firefox",
-        title: "Options...",
-        contexts: ["browser_action"],
-      });
-    }
   });
 }
 

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "i am not uncertain",
-  "version": "1.0.45",
+  "version": "1.0.46",
   "description": "omnibar search → nth result. press escape to cancel.",
   "browser_specific_settings": {
     "gecko": {
@@ -30,7 +30,6 @@
     "*://*.yandex.com/*",
     "*://*.baidu.com/*",
     "*://*.qwant.com/*",
-    "*://*.searx.be/*",
     "*://*.mojeek.com/*"
   ],
   "content_scripts": [
@@ -47,7 +46,6 @@
         "*://*.yandex.com/search*",
         "*://*.baidu.com/s*",
         "*://*.qwant.com/*",
-        "*://*.searx.be/search*",
         "*://*.mojeek.com/search*"
       ],
       "js": [
@@ -74,7 +72,6 @@
         "*://*.yandex.com/*",
         "*://*.baidu.com/*",
         "*://*.qwant.com/*",
-        "*://*.searx.be/*",
         "*://*.mojeek.com/*"
       ]
     }
