@@ -643,7 +643,7 @@
     );
     const strong = document.createElement("strong");
     strong.style.fontWeight = "600";
-    strong.textContent = "ESC";
+    strong.textContent = "SPACE";
     cancelMessage.appendChild(strong);
     cancelMessage.appendChild(document.createTextNode(" to cancel"));
 
@@ -899,7 +899,7 @@
     }
   });
 
-  // Listen for ESC key to cancel
+  // Listen for SPACE key to cancel
   document.addEventListener("keydown", (e) => {
     if (e.code === "Space" && redirectTimeout) {
       e.preventDefault();
