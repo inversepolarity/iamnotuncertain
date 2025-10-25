@@ -82,6 +82,7 @@ function saveSettings() {
   const enabled = document.getElementById("enabled").checked;
   const resultIndex = parseInt(document.getElementById("resultIndex").value);
   const showNotification = document.getElementById("showNotification").checked;
+  const autoReport = document.getElementById("autoReport").checked;
 
   const enabledEngines = {};
   Object.keys(SEARCH_ENGINES).forEach((key) => {
@@ -97,6 +98,7 @@ function saveSettings() {
       resultIndex,
       enabledEngines,
       showNotification,
+      autoReport,
     },
     () => {
       showSavedMessage();
@@ -107,15 +109,23 @@ function saveSettings() {
 
 function loadSettings() {
   browserAPI.storage.sync.get(
-    ["enabled", "resultIndex", "enabledEngines", "showNotification"],
+    [
+      "enabled",
+      "resultIndex",
+      "autoReport",
+      "enabledEngines",
+      "showNotification",
+    ],
     (result) => {
       const enabled = result.enabled !== false;
       const resultIndex = result.resultIndex || 1;
       const showNotification = result.showNotification !== false;
+      const autoReport = result.autoReport !== false;
 
       document.getElementById("enabled").checked = enabled;
       document.getElementById("resultIndex").value = resultIndex;
       document.getElementById("showNotification").checked = showNotification;
+      document.getElementById("autoReport").checked = autoReport;
 
       updateStatusIndicator(enabled);
       updateOrdinal(resultIndex);
@@ -181,12 +191,17 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("showNotification")
     .addEventListener("change", saveSettings);
 
+  document
+    .getElementById("autoReport")
+    .addEventListener("change", saveSettings);
+
   // Reset button
   document.getElementById("reset").addEventListener("click", () => {
     if (confirm("Reset all settings to defaults?")) {
       document.getElementById("enabled").checked = true;
       document.getElementById("resultIndex").value = 1;
       document.getElementById("showNotification").checked = true;
+      document.getElementById("autoReport").checked = true;
 
       updateStatusIndicator(true);
       updateOrdinal(1);
