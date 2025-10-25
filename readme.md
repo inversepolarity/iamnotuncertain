@@ -11,7 +11,7 @@ omnibar search → nth result.
 - zero data collection
 - all major search engines supported
 - theme-detecting redirection popup
-- press escape to cancel redirect
+- press `space` to cancel redirect
 
 ## search engines supported
 

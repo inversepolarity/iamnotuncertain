@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "i am not uncertain",
-  "version": "1.0.46",
+  "version": "1.0.5",
   "description": "omnibar search → nth result. press escape to cancel.",
   "browser_specific_settings": {
     "gecko": {

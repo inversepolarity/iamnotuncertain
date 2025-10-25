@@ -901,7 +901,8 @@
 
   // Listen for ESC key to cancel
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && redirectTimeout) {
+    if (e.code === "Space" && redirectTimeout) {
+      e.preventDefault();
       cancelRedirect();
     }
   });

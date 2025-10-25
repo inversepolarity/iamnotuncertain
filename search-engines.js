@@ -25,6 +25,7 @@ const SEARCH_ENGINES = {
       "#rhs", // Right sidebar
       ".xpdopen", // Featured snippets
       ".kp-wholepage", // Knowledge panels
+      "[data-attrid='DictionaryHeader']", //Dictionary panel
     ],
   },
 
