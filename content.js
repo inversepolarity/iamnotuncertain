@@ -6,6 +6,7 @@
     resultIndex: 1,
     enabledEngines: {},
     showNotification: true,
+    autoReport: true,
   };
 
   let redirectCancelled = false;
@@ -915,6 +916,7 @@
       config.resultIndex = result.resultIndex || 1;
       config.enabledEngines = result.enabledEngines || {};
       config.showNotification = result.showNotification !== false;
+      config.autoReport = result.autoReport !== false;
 
       // Enable all engines by default on first run
       if (Object.keys(config.enabledEngines).length === 0) {
@@ -932,12 +934,19 @@
   // Load settings and run - WAIT FOR PAGE LOAD
   function init() {
     chrome.storage.sync.get(
-      ["enabled", "resultIndex", "enabledEngines", "showNotification"],
+      [
+        "enabled",
+        "resultIndex",
+        "enabledEngines",
+        "showNotification",
+        "autoReport",
+      ],
       (result) => {
         config.enabled = result.enabled !== false;
         config.resultIndex = result.resultIndex || 1;
         config.enabledEngines = result.enabledEngines || {};
         config.showNotification = result.showNotification !== false;
+        config.autoReport = result.autoReport !== false;
 
         // Enable all engines by default on first run
         if (Object.keys(config.enabledEngines).length === 0) {
@@ -966,6 +975,9 @@
     if (area === "sync") {
       if (changes.enabled) {
         config.enabled = changes.enabled.newValue;
+      }
+      if (changes.autoReport) {
+        config.autoReport = changes.enabled.autoReport;
       }
       if (changes.resultIndex) {
         config.resultIndex = changes.resultIndex.newValue;
