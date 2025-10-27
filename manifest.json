@@ -30,7 +30,8 @@
     "*://*.yandex.com/*",
     "*://*.baidu.com/*",
     "*://*.qwant.com/*",
-    "*://*.mojeek.com/*"
+    "*://*.mojeek.com/*",
+    "https://iamnotuncertain-issuebot.suraj-f45.workers.dev/*"
   ],
   "content_scripts": [
     {

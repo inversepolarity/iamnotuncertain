@@ -831,6 +831,122 @@
     return window.location.href;
   }
 
+  async function canReportIssue(key) {
+    if (!config.autoReport) return false;
+
+    const storageKey = `issue-report-${key}`;
+    const { [storageKey]: lastReport } = await chrome.storage.local.get(
+      storageKey
+    );
+
+    const THROTTLE = 36 * 60 * 60 * 1000; //once every 3 days
+
+    if (lastReport && Date.now() - lastReport < THROTTLE) {
+      return false; // Already reported
+    }
+
+    // Store timestamp
+    await chrome.storage.local.set({ [storageKey]: Date.now() });
+    return true;
+  }
+
+  function getBrowserEngine() {
+    const ua = navigator.userAgent;
+    if (ua.includes("AppleWebKit") && !ua.includes("Chrome")) return "WebKit";
+    if (ua.includes("Gecko/") && !ua.includes("like Gecko")) return "Gecko";
+    if (ua.includes("Chrome") || ua.includes("Chromium")) return "Blink";
+    return "Unknown";
+  }
+
+  function getTimestamp() {
+    const now = new Date();
+    return now.toLocaleString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZoneName: "short",
+    });
+  }
+
+  async function reportIssue(engine, failureType, resultIndex = null) {
+    const key = `${engine.name}-${failureType}-${resultIndex}`;
+
+    if (!(await canReportIssue(key))) {
+      console.log("Error reporting disabled by user");
+      return null;
+    }
+
+    try {
+      const browser = getBrowserEngine();
+      const timestamp = getTimestamp();
+      const url = window.location.href;
+      const query =
+        new URLSearchParams(window.location.search).get("q") || "unknown";
+
+      // Build title based on failure type
+      let title;
+      if (failureType === "no-results") {
+        title = `${engine.name} failed for user on ${browser} (no results found)`;
+      } else if (failureType === "result-not-found") {
+        title = `${engine.name} failed for user on ${browser} (could not find result #${resultIndex})`;
+      }
+
+      // Build detailed body
+      const body = `
+## Error Report
+
+**Timestamp:** ${timestamp}  
+**Browser:** ${browser}  
+**Engine:** ${engine.name}  
+**Search Query:** \`${query}\`  
+**URL:** ${url}  
+**User Agent:** \`${navigator.userAgent}\`
+
+### Failure Details
+- **Type:** ${failureType}
+- **Result Index:** ${resultIndex || "N/A"}
+
+### Additional Info
+- **Extension Version:** ${chrome.runtime.getManifest().version}
+- **Language:** ${navigator.language}
+`;
+
+      const response = await fetch(
+        "https://iamnotuncertain-issuebot.suraj-f45.workers.dev/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            owner: "inversepolarity",
+            repo: "iamnotuncertain",
+            title: title,
+            body: body,
+            labels: ["bug", "engine-failure", "auto-reported", `${browser}`],
+            assignees: ["surajsharma"],
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("✓ Issue reported:", result.html_url);
+        return result;
+      } else {
+        console.error("✗ Failed to report issue:", await response.text());
+        return null;
+      }
+    } catch (error) {
+      console.error("✗ Error reporting issue:", error);
+      return null;
+    }
+  }
+
   async function attemptRedirect() {
     const searchEngine = detectSearchEngine();
 
@@ -865,6 +981,11 @@
       console.log(`⚠ No results found for ${engine.name}`);
       sessionStorage.removeItem("SearchProcessed");
       chrome.runtime.sendMessage({ action: "redirectFailed" });
+      reportIssue({ name: engine.name }, "no-results-found").then((result) => {
+        if (result) {
+          console.log("issue created:", result.html_url);
+        }
+      });
       return;
     }
 
@@ -890,6 +1011,15 @@
       console.log(`✗ Could not find result #${config.resultIndex}`);
       sessionStorage.removeItem("SearchProcessed");
       chrome.runtime.sendMessage({ action: "redirectFailed" });
+      reportIssue(
+        { name: engine.name },
+        `result-not-found`,
+        config.resultIndex
+      ).then((result) => {
+        if (result) {
+          console.log("Test issue created:", result.html_url);
+        }
+      });
     }
   }
 
