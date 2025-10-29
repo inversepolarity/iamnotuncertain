@@ -1,0 +1,5 @@
+# 1.0.5 (current stable release candidate)
+
+- Auto reporting on engine failure
+- Open changelog on auto-update
+- Better selectors for google

@@ -936,6 +936,9 @@
       if (response.ok) {
         const result = await response.json();
         console.log("✓ Issue reported:", result.html_url);
+        alert(
+          `⚠️ i am not uncertain could not parse links from ${engine.name}, the developer has been notified.\n Please update the extension in 1-2 business days or wait for auto updation. Meanwhile, change your search engine browser settings to continue to enjoy the extension.`
+        );
         return result;
       } else {
         console.error("✗ Failed to report issue:", await response.text());

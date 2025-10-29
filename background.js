@@ -286,3 +286,14 @@ browserAPI.runtime.onInstalled.addListener(() => {
 
 // Recreate menu on startup (in case it was cleared)
 createContextMenu();
+("");
+
+// open changelog on update
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === "update") {
+    browserAPI.tabs.create({
+      url: "https://github.com/inversepolarity/iamnotuncertain/blob/master/changelog",
+      active: true,
+    });
+  }
+});
