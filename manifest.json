@@ -51,8 +51,7 @@
       ],
       "js": [
         "search-engines.js",
-        "content.js",
-        "modal.js"
+        "content.js"
       ],
       "run_at": "document_end"
     }
