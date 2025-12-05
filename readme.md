@@ -1,7 +1,8 @@
 ![](https://github.com/inversepolarity/iamnotuncertain/blob/master/icons/icon128.png)
 
 ## i am not uncertain
-omnibar search → nth result.
+omnibar search → nth result. [video tutorial](https://youtu.be/14l0j2kKkds?si=xyfeMlYxI3P_NmQB)
+
 
 ![options](/usage.png)
 
