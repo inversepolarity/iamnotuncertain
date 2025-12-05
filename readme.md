@@ -1,7 +1,7 @@
 ![](https://github.com/inversepolarity/iamnotuncertain/blob/master/icons/icon128.png)
 
 ## i am not uncertain
-omnibar search → nth result. [video tutorial](https://youtu.be/14l0j2kKkds?si=xyfeMlYxI3P_NmQB)
+omnibar search → nth result.
 
 
 ![options](/usage.png)
@@ -37,6 +37,9 @@ omnibar search → nth result. [video tutorial](https://youtu.be/14l0j2kKkds?si=
 
 </div>
 
+## tutorial
+
+watch a short [video tutorial](https://youtu.be/14l0j2kKkds?si=xyfeMlYxI3P_NmQB) to learn more
 
 ## commemorations
 
